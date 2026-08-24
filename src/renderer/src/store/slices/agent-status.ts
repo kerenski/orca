@@ -2025,6 +2025,9 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
         // completed checkpoint so a late heartbeat cannot make it eligible for ghost resume.
         const preservesCompletedRecoveryRecord =
           existingRecordMatchesProviderSession && existingRecord?.state === 'done'
+        // Why: an explicit quit capture must remain the resume handle until a new provider session replaces it.
+        const preservesQuitOrigin =
+          existingRecordMatchesProviderSession && existingRecord?.origin === 'quit'
         const launchConfig =
           (registryMatches ? registryEntry?.launchConfig : undefined) ??
           (existingRecordMatchesProviderSession ? existingRecord.launchConfig : undefined)
@@ -2057,7 +2060,7 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
           ...(preservesCompletedRecoveryRecord && existingRecord.interrupted !== undefined
             ? { interrupted: existingRecord.interrupted }
             : {}),
-          origin: 'live'
+          origin: preservesQuitOrigin ? 'quit' : 'live'
         }
         removedLiveStatus = existingStatus !== undefined
         const nextLive = removedLiveStatus ? { ...s.agentStatusByPaneKey } : s.agentStatusByPaneKey
