@@ -61,20 +61,40 @@ function seedLiveLocalCodexPane(): void {
   } as never)
 }
 
-function reportTurnFinished(): void {
-  useAppStore
-    .getState()
-    .setAgentStatus(
-      PANE_KEY,
-      { state: 'done', agentType: 'codex', prompt: 'review the diff' } as never,
-      'Codex',
-      { updatedAt: 1000, stateStartedAt: 1000 },
-      { tabId: TAB_ID, worktreeId: WORKTREE_ID, terminalHandle: 'pty-1' } as never,
-      { providerSession: { key: 'session_id', id: SESSION_ID } } as never
-    )
+function reportTurnFinished(interrupted = false): void {
+  useAppStore.getState().setAgentStatus(
+    PANE_KEY,
+    {
+      state: 'done',
+      agentType: 'codex',
+      prompt: 'review the diff',
+      ...(interrupted ? { interrupted: true } : {})
+    } as never,
+    'Codex',
+    { updatedAt: 1000, stateStartedAt: 1000 },
+    { tabId: TAB_ID, worktreeId: WORKTREE_ID, terminalHandle: 'pty-1' } as never,
+    { providerSession: { key: 'session_id', id: SESSION_ID } } as never
+  )
 }
 
 describe('a finished local agent', () => {
+  it('keeps completed quit records resumable', () => {
+    expect(
+      isPassiveCompletedHibernationEvidence({
+        paneKey: 'quit-tab:quit-leaf',
+        tabId: 'quit-tab',
+        worktreeId: WORKTREE_ID,
+        agent: 'codex',
+        providerSession: { key: 'session_id', id: SESSION_ID },
+        prompt: '',
+        state: 'done',
+        origin: 'quit',
+        capturedAt: 1,
+        updatedAt: 1
+      })
+    ).toBe(false)
+  })
+
   it('keeps its resume identity and is recorded as completed history', () => {
     seedLiveLocalCodexPane()
 
@@ -91,6 +111,30 @@ describe('a finished local agent', () => {
       isPassiveCompletedHibernationEvidence(record!),
       'a finished agent must read as history, or activation restarts it'
     ).toBe(true)
+  })
+
+  it('keeps an interrupted done turn resumable after its pane is killed', () => {
+    seedLiveLocalCodexPane()
+    reportTurnFinished(true)
+
+    const record = useAppStore.getState().sleepingAgentSessionsByPaneKey[PANE_KEY]
+    expect(record?.state).toBe('done')
+    expect(record?.interrupted).toBe(true)
+    expect(isPassiveCompletedHibernationEvidence(record!)).toBe(false)
+
+    useAppStore.setState({
+      tabsByWorktree: { [WORKTREE_ID]: [] },
+      ptyIdsByTabId: {},
+      terminalLayoutsByTabId: {}
+    } as never)
+
+    const launched = resumeSleepingAgentSessionsForWorktree(WORKTREE_ID)
+
+    expect(launched).toBe(1)
+    const state = useAppStore.getState()
+    const resumedTab = state.tabsByWorktree[WORKTREE_ID]?.[0]
+    expect(resumedTab?.launchAgent).toBe('codex')
+    expect(state.pendingStartupByTabId[resumedTab!.id]?.showSessionRestoredBanner).toBe(true)
   })
 
   it('is not respawned into a new tab once its pane is killed', () => {
