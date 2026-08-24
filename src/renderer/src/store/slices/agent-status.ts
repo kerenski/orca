@@ -2451,9 +2451,12 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
         const liveRecoveryRecord = liveRecoveryWorktreeId
           ? sleepingRecordFromEntry({
               state: s,
-              // Why: a completed resumable-agent turn leaves the TUI session alive — keep resume identity active without representing done as pending work.
+              // Why: keep the resume identity of a finished turn without its text,
+              // but never restate `done` as pending work — the resume sweep reads
+              // that state to tell an interrupted agent from a completed one, and
+              // a lie there respawns every finished agent whose pane was killed.
               entry: retainsResumableRecoveryIdentity
-                ? { ...entry, state: 'working', prompt: '', lastAssistantMessage: undefined }
+                ? { ...entry, prompt: '', lastAssistantMessage: undefined }
                 : entry,
               worktreeId: liveRecoveryWorktreeId,
               capturedAt: updatedAt,

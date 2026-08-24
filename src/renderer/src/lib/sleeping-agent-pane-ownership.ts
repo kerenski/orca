@@ -17,8 +17,12 @@ export function getProviderSessionClaimKey(record: SleepingAgentSessionRecord): 
     : base
 }
 
+// Why `quit` is excluded but `live` is not: quitting an agent is an explicit
+// request to keep it resumable, so its record stays active work. A `live`
+// checkpoint of a turn that reached `done` is history — the pane may still
+// cold-restore it in place, but activation must not open a new tab for it.
 export function isPassiveCompletedHibernationEvidence(record: SleepingAgentSessionRecord): boolean {
-  return record.origin !== 'quit' && record.origin !== 'live' && record.state === 'done'
+  return record.origin !== 'quit' && record.state === 'done'
 }
 
 function getLegacyPaneTabId(record: SleepingAgentSessionRecord): string | null {

@@ -79,11 +79,6 @@ function stubPersistedResumeCommand(userDataDir: string): PersistedRecord {
 
 test.describe.configure({ mode: 'serial' })
 
-// KNOWN FAILING: this is the reported defect, not a regression guard yet. The
-// respawn is real on current main — see the assertion at the bottom. Remove
-// `test.fail` in the commit that makes a finished turn distinguishable from an
-// interrupted one; the suite then fails loudly if the respawn ever returns.
-test.fail()
 test('does not respawn an agent whose turn already finished', async (// oxlint-disable-next-line no-empty-pattern -- Playwright's second fixture arg is testInfo; the first must be an object destructure to opt out of the default fixture set.
 {}, testInfo) => {
   const repoPath = readFileSync(TEST_REPO_PATH_FILE, 'utf-8').trim()
@@ -136,13 +131,13 @@ test('does not respawn an agent whose turn already finished', async (// oxlint-d
       }
     )
 
-    // The finished turn is stored as unfinished work.
+    // The finished turn keeps its resume identity without restating done as work.
     const liveRecord = await page.evaluate((paneKey) => {
       const record = window.__store?.getState().sleepingAgentSessionsByPaneKey[paneKey]
       return record ? { state: record.state, origin: record.origin } : null
     }, descriptor.paneKey)
     expect(liveRecord, 'a finished turn leaves a resume record').not.toBeNull()
-    expect(liveRecord?.state, 'the done turn is recorded as working').toBe('working')
+    expect(liveRecord?.state, 'the done turn stays done').toBe('done')
     expect(liveRecord?.origin).toBe('live')
 
     // A second, ordinary terminal: the reported workspaces were never empty, and
