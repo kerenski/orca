@@ -2021,6 +2021,10 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
         const existingRecordMatchesProviderSession =
           existingRecord?.agent === agent &&
           agentProviderSessionsEqual(agent, existingRecord.providerSession, providerSession)
+        // Why: provider-session heartbeats can arrive after the turn is complete; preserve the
+        // completed checkpoint so a late heartbeat cannot make it eligible for ghost resume.
+        const preservesCompletedRecoveryRecord =
+          existingRecordMatchesProviderSession && existingRecord?.state === 'done'
         const launchConfig =
           (registryMatches ? registryEntry?.launchConfig : undefined) ??
           (existingRecordMatchesProviderSession ? existingRecord.launchConfig : undefined)
@@ -2032,7 +2036,7 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
           providerSession,
           prompt: '',
           // Why: durable process/session identity, not visible turn state; a non-done value keeps cold restore eligible.
-          state: 'working',
+          state: preservesCompletedRecoveryRecord ? 'done' : 'working',
           capturedAt: updatedAt,
           updatedAt,
           ...(existingStatus?.terminalTitle
@@ -2049,6 +2053,9 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
           ...(existingRecordMatchesProviderSession &&
           existingRecord.automaticResumeBlockedBy === 'legacy-orchestration-worker'
             ? { automaticResumeBlockedBy: 'legacy-orchestration-worker' }
+            : {}),
+          ...(preservesCompletedRecoveryRecord && existingRecord.interrupted !== undefined
+            ? { interrupted: existingRecord.interrupted }
             : {}),
           origin: 'live'
         }
