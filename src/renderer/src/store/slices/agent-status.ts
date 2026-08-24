@@ -611,6 +611,7 @@ function sleepingRecordFromEntry(args: {
     worktreeId: args.worktreeId,
     agent,
     providerSession: args.entry.providerSession,
+    ...(args.entry.connectionId !== undefined ? { connectionId: args.entry.connectionId } : {}),
     prompt: args.entry.prompt,
     state: args.entry.state,
     capturedAt: args.capturedAt,
@@ -897,11 +898,14 @@ function recoveryRecordMatches(
   if (!existing) {
     return false
   }
+  // Why: completion or interruption must replace a pre-status working checkpoint.
   return (
     existing.origin === next.origin &&
     existing.agent === next.agent &&
     existing.worktreeId === next.worktreeId &&
     existing.tabId === next.tabId &&
+    existing.state === next.state &&
+    existing.interrupted === next.interrupted &&
     agentProviderSessionsEqual(existing.agent, existing.providerSession, next.providerSession) &&
     launchConfigsEqual(existing.launchConfig, next.launchConfig)
   )
@@ -2322,7 +2326,9 @@ export const createAgentStatusSlice: StateCreator<AppState, [], [], AgentStatusS
             ? { connectionId: routing.connectionId }
             : existing?.connectionId !== undefined
               ? { connectionId: existing.connectionId }
-              : {}),
+              : s.sleepingAgentSessionsByPaneKey[paneKey]?.connectionId !== undefined
+                ? { connectionId: s.sleepingAgentSessionsByPaneKey[paneKey].connectionId }
+                : {}),
           tabId: statusTabId,
           terminalTitle: effectiveTitle,
           stateHistory: history,

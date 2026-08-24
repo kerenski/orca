@@ -371,7 +371,7 @@ describe('recordAgentProviderSession', () => {
         agent,
         providerSession,
         connectionId: 'ssh-connection-1',
-        state: 'working',
+        state: 'done',
         origin: 'live'
       })
 
@@ -450,7 +450,7 @@ describe('recordAgentProviderSession', () => {
         agent,
         providerSession,
         connectionId: 'ssh-connection-1',
-        state: 'working',
+        state: 'done',
         origin: 'quit'
       })
 
