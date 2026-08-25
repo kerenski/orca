@@ -79,6 +79,9 @@ TPL_FILE="${SCRIPT_DIR}/../templates/controller-prompt.tpl.md"
 [ -f "$TPL_FILE" ] || { echo "ERROR: 模板缺失 $TPL_FILE" >&2; exit 1; }
 
 REPO_SEL="path:$(pwd)"
+# worktree 必须从当前开发分支切出（本 fork 的开发在 wecir-dev-v*，Orca 默认 base 是 origin/main，会缺技能与 M1 代码）
+BASE_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || true)"
+[ -n "$BASE_BRANCH" ] || { echo "ERROR: 无法确定当前分支（需在主 worktree 的命名分支上运行）" >&2; exit 1; }
 
 # ---- 孤儿检查：同名 worktree（displayName == card） ----
 OLD_PATH=$(orca worktree list --json 2>/dev/null | jq -r \
@@ -97,7 +100,7 @@ fi
 
 # ---- 建 worktree（空白，不传 --agent；模型由 terminal create --command 传入） ----
 echo "  [1/4] 创建 worktree ${CARD}（issue #${ISSUE}）..."
-WT_RESP=$(orca worktree create --repo "$REPO_SEL" --name "$CARD" --issue "$ISSUE" --setup skip --json)
+WT_RESP=$(orca worktree create --repo "$REPO_SEL" --name "$CARD" --issue "$ISSUE" --setup skip --base-branch "$BASE_BRANCH" --json)
 WT_PATH=$(echo "$WT_RESP" | jq -r '.result.worktree.path // .result.path // empty')
 if [ -z "$WT_PATH" ] || [ "$WT_PATH" = "null" ]; then
   echo "ERROR: 解析 worktree path 失败，原始回执：" >&2; echo "$WT_RESP" >&2; exit 1
