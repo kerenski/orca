@@ -61,7 +61,10 @@ ${REVIEW_BODY}
    CTRL_HANDLE=$(cat /tmp/${CARD}/controller.handle 2>/dev/null)
    [ -n \"\$CTRL_HANDLE\" ] && orca terminal send --terminal \"\$CTRL_HANDLE\" \
      --text \"DEV_SIGNAL ${CARD} round=${ROUND} head=\$(git rev-parse --short HEAD)\" --enter
-   （文件不存在或发送失败则跳过，继续完成自身收尾即可）"
+  （文件不存在或发送失败则跳过，继续完成自身收尾即可）
+6. 禁止裸 gh：此 worktree 是双 remote（fork kerenski/orca + upstream stablyai/orca），同号 issue/PR 内容不同，
+   运行不带 -R 的 gh issue/pr 命令会解析到上游英文内容（#61 实测事故）。确需用 gh 时必须显式加 -R kerenski/orca。
+"
 
 _send() {
   orca terminal send --terminal "$HANDLE" --text "$MSG" --enter --json >/dev/null 2>&1

@@ -121,3 +121,4 @@ Closes #{{ISSUE}}" ;; esac），使 PR 合并后 GitHub 自动关闭 issue，避
   - 大输出不进对话：issue/锚点全文只在第 4 步首次读入并提取为 acceptance.md；代码质量由 PR CI 统一检测
   - worker terminal 标题统一 #{{ISSUE}}-{{CARD}}-worker-<N>（N 为启动序号，由脚本保证）
   - PR 真实 CI 未全绿不汇报"可合并"；draft PR 仅用于触发 CI，禁止自动 merge，合并前必等确认
+  - gh 命令一律显式 -R {{FORK_REPO}}（禁止裸 gh：双 remote 下裸 gh 解析到上游同号 issue/PR，#61 实测事故）
