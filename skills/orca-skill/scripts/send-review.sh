@@ -2,7 +2,7 @@
 # send-review.sh —— 向 worker 发第 N 轮 review 修复意见（固定话术框架 + 意见文件内容）
 # 话术要点来自 方案/Orca两层编排闭环流程-v2.md §7（内置在脚本里，controller 无需记忆）
 #
-# 用法：bash skills/orca-skill/scripts/send-review.sh --issue <n> --card <c> --round <N> --worker <handle> --file <意见md>
+# 用法：bash $HOME/.orca-skill/scripts/send-review.sh --issue <n> --card <c> --round <N> --worker <handle> --file <意见md>
 # 输出：REVIEW_SENT:<issue>-<card> round=<N> -> <handle>
 # 退出码：0 成功；1 参数错误；2 意见文件不存在或发送失败
 

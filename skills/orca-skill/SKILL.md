@@ -41,7 +41,7 @@ description: 开卡 SOP。用户说「开卡 / 跑一张卡 / 跑 issue #N / sta
 | medium | 预估 2 人天；跨 2-3 文件；前后端联动或新增单模块 |
 | complex | 预估 ≥3 人天；多模块多文件；含红线（数据范围/权限/RBAC）、状态机、需强推理 |
 
-组合（controller/worker）以 `skills/orca-skill/tiers.json` 为唯一事实源，判档时查该文件。
+组合（controller/worker）以 `$HOME/.orca-skill/tiers.json` 为唯一事实源，判档时查该文件。
 覆盖默认组合：`--controller-cmd "<完整命令>"` / `--worker-agent "<id[ 参数]>"`。
 
 ## 禁止

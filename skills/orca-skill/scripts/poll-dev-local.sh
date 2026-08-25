@@ -24,11 +24,11 @@
 #
 # controller 调用方式：
 #   1) 阻塞等待首轮开发完成：
-#        bash skills/orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c>
+#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c>
 #   2) 等待第 N 轮修复完成（baseline 传上一轮结束时的 ahead；round 传当前修复轮次）：
-#        bash skills/orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> --round <N> <baseline>
+#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> --round <N> <baseline>
 #   3) 仅查一次状态（不做存活检测、不催提交）：
-#        bash skills/orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> [--round <N>] <baseline> --once
+#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> [--round <N>] <baseline> --once
 #
 # 退出码：
 #   0  开发/修复完成且确有实质改动（DEV_DONE:ahead=...:real=...:baseline=...）

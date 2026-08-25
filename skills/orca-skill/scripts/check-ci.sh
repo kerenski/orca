@@ -9,13 +9,13 @@
 #
 # 用法：
 #   # 默认：查当前分支所属 open PR 的真实 CI（推荐，方向 A）
-#   bash skills/orca-skill/scripts/check-ci.sh [--timeout <sec>]
+#   bash $HOME/.orca-skill/scripts/check-ci.sh [--timeout <sec>]
 #
 #   # 显式指定 PR 号（该 PR 必须已存在）
-#   bash skills/orca-skill/scripts/check-ci.sh --pr <number> [--timeout <sec>]
+#   bash $HOME/.orca-skill/scripts/check-ci.sh --pr <number> [--timeout <sec>]
 #
 #   # 仅查某 commit 的 checks（仅供参考，不代表 PR CI，会打印 WARNING）
-#   bash skills/orca-skill/scripts/check-ci.sh --sha <sha> [--timeout <sec>]
+#   bash $HOME/.orca-skill/scripts/check-ci.sh --sha <sha> [--timeout <sec>]
 #
 # 退出码：
 #   0  所有 checks 完成且通过（打印 CI_PASS:...）

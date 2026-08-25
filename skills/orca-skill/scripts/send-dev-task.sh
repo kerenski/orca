@@ -2,7 +2,7 @@
 # send-dev-task.sh —— 向 worker 发首轮开发指令（固定话术：本地检查 + 日志 sentinel + commit/push）
 # 话术要点来自 方案/Orca两层编排闭环流程-v2.md §7（内置在脚本里，controller 无需记忆）
 #
-# 用法：bash skills/orca-skill/scripts/send-dev-task.sh --issue <n> --card <c> --worker <handle> [--extra "<补充要求>"]
+# 用法：bash $HOME/.orca-skill/scripts/send-dev-task.sh --issue <n> --card <c> --worker <handle> [--extra "<补充要求>"]
 # 输出：DEV_TASK_SENT:<issue>-<card> -> <handle>
 # 退出码：0 成功；1 参数错误；2 发送失败
 
@@ -41,7 +41,7 @@ fi
 ANCHOR_FILE=$(ls 开发日志/*/${ISSUE}-${CARD}.md 2>/dev/null | head -1)
 if [ -n "$ANCHOR_FILE" ] && grep -q "## 开发任务（首轮）" "$ANCHOR_FILE"; then
   echo "ERROR: 检测到本卡首轮开发日志已存在（${ANCHOR_FILE}），当前应为 review 修复轮，禁止使用 send-dev-task.sh 重发首轮。" >&2
-  echo "       请改用：bash skills/orca-skill/scripts/send-review.sh --issue ${ISSUE} --card ${CARD} --round <N> --worker <handle> --file <意见md>" >&2
+  echo "       请改用：bash $HOME/.orca-skill/scripts/send-review.sh --issue ${ISSUE} --card ${CARD} --round <N> --worker <handle> --file <意见md>" >&2
   exit 1
 fi
 

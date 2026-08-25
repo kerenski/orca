@@ -3,7 +3,7 @@
 # 设计规格：方案/Orca两层编排闭环流程-v2.md §6
 #
 # 用法（在仓库主 worktree 根目录执行）：
-#   bash skills/orca-skill/scripts/start-card.sh --issue <n> --card <c> --tier simple|medium|complex \
+#   bash $HOME/.orca-skill/scripts/start-card.sh --issue <n> --card <c> --tier simple|medium|complex \
 #        [--controller-cmd "<cmd>"] [--worker-agent "<id[ 参数]>"] [--force]
 #
 # 退出码：

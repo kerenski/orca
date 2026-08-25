@@ -3,7 +3,7 @@
 # 含：同名复用、--force 重建、kimi 预信任、创建后等待就绪
 #
 # 用法（在卡的 worktree 内执行，controller 会话的工作目录即 worktree）：
-#   bash skills/orca-skill/scripts/ensure-worker.sh --issue <n> --card <c> --worker-agent "<id[ 参数]>" [--force]
+#   bash $HOME/.orca-skill/scripts/ensure-worker.sh --issue <n> --card <c> --worker-agent "<id[ 参数]>" [--force]
 #
 # 输出：WORKER_READY:<handle>（controller 从中取 handle）
 # 退出码：0 成功/复用；1 错误
