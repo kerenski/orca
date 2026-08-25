@@ -86,6 +86,9 @@ vi.mock('lucide-react', () => ({
   },
   X: function X(props: Record<string, unknown>) {
     return { type: 'X', props }
+  },
+  Hash: function Hash(props: Record<string, unknown>) {
+    return { type: 'Hash', props }
   }
 }))
 
@@ -105,6 +108,7 @@ const useAppStoreMock = Object.assign(
       settings: Record<string, unknown>
       unifiedTabsByWorktree: Record<string, unknown[]>
       groupsByWorktree: Record<string, unknown[]>
+      editorCursorLine: Record<string, number>
     }) => unknown
   ) =>
     selector({
@@ -114,7 +118,8 @@ const useAppStoreMock = Object.assign(
       },
       groupsByWorktree: {
         'wt-1': [{ id: 'group-1', tabOrder: ['tab-1', 'tab-2'] }]
-      }
+      },
+      editorCursorLine: { 'file-1': 42 }
     }),
   {
     getState: () => ({
@@ -124,7 +129,8 @@ const useAppStoreMock = Object.assign(
       },
       groupsByWorktree: {
         'wt-1': [{ id: 'group-1', tabOrder: ['tab-1', 'tab-2'] }]
-      }
+      },
+      editorCursorLine: { 'file-1': 42 }
     })
   }
 )

@@ -109,7 +109,6 @@ export function EditorFileTabContextMenu({
   const closeAllShortcut = useOptionalShortcutLabel('tab.closeAll')
   const editorCursorLine = useAppStore((s) => s.editorCursorLine)
   const isDiff = file.mode === 'diff'
-  const cursorLine = editorCursorLine[file.id] ?? 1
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
@@ -241,6 +240,7 @@ export function EditorFileTabContextMenu({
           <>
             <DropdownMenuItem
               onSelect={() => {
+                const cursorLine = editorCursorLine?.[file.id] ?? 1
                 void window.api.ui.writeClipboardText(
                   formatPathLineReference(file.filePath, cursorLine)
                 )
@@ -254,6 +254,7 @@ export function EditorFileTabContextMenu({
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => {
+                const cursorLine = editorCursorLine?.[file.id] ?? 1
                 void window.api.ui.writeClipboardText(
                   formatPathLineReference(file.relativePath, cursorLine)
                 )
