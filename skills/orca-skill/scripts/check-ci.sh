@@ -18,8 +18,8 @@
 #   bash $HOME/.orca-skill/scripts/check-ci.sh --sha <sha> [--timeout <sec>]
 #
 # 退出码：
-#   0  所有 checks 完成且通过（打印 CI_PASS:...）
-#   1  有失败的 checks（打印 CI_FAIL:...）
+#   0  所有 checks 完成且通过（仅 pass/skipping，打印 CI_PASS:...）
+#   1  有失败、取消或未知状态的 checks（打印 CI_FAIL:...）
 #   2  超时仍有 checks 未完成
 #   3  其他错误（含：无 open PR 且未指定 --sha / --pr；gh 调用失败）
 
@@ -41,9 +41,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-OWNER_REPO=$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]([^/]+)/([^/]+)(\.git)?$#\1/\2#' | sed 's/\.git$//')
-if [ -z "$OWNER_REPO" ]; then
-  OWNER_REPO="kerenski/Shenzhi"
+OWNER_REPO=$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]([^/]+)/([^/]+)#\1/\2#' | sed 's#\.git$##')
+if [ -z "$OWNER_REPO" ] || [[ "$OWNER_REPO" != *"/"* ]]; then
+  # 不硬编码兑底仓库：错仓库查 CI 比直接报错更危险（多 remote 下 gh 偏好 upstream，必须显式指向 origin fork）
+  echo "ERROR: 无法从 origin remote 解析目标仓库（git remote get-url origin）" >&2
+  exit 3
 fi
 
 # 若未显式给 PR 号也未给 SHA，则按当前分支反查 open PR
@@ -52,7 +54,7 @@ if [ -z "$PR_NUM" ] && [ -z "$SHA" ]; then
     echo "ERROR: 无法获取当前分支名，也无法定位 PR（可改用 --pr 或 --sha）" >&2
     exit 3
   fi
-  PR_NUM=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' 2>/dev/null || echo "")
+  PR_NUM=$(gh pr list --repo "$OWNER_REPO" --head "$BRANCH" --state open --json number -q '.[0].number' 2>/dev/null || echo "")
   if [ -z "$PR_NUM" ]; then
     echo "ERROR: 当前分支 $BRANCH 没有 open PR，无法获取 PR 真实 CI。" >&2
     echo "       请先开 PR（gh pr create）或显式传 --pr <number>；" >&2
@@ -67,7 +69,8 @@ if [ -n "$PR_NUM" ]; then
   echo "  [ci] 查询 PR #${PR_NUM} 的 checks..."
   elapsed=0
   while true; do
-    # gh pr checks --json 的 bucket 字段把 state 归类为 pass/fail/pending/skipping/cancel。
+    # gh pr checks --json 的 bucket 字段把 state 归类为 pass/fail/pending/skipping/cancel；
+    # 仅 pass/skipping 视为成功，pending 等待，cancel/未知状态视为失败。
     # 注意：存在 pending/queued 的 check 时 gh pr checks 返回退出码 8（Checks pending），
     # 这是正常未完成态，不是错误——只有 8 之外的非 0 才是真错误（如鉴权/网络）。
     out=$(gh pr checks "$PR_NUM" --repo "$OWNER_REPO" --json bucket,name,state,link 2>/dev/null)
@@ -81,17 +84,17 @@ if [ -n "$PR_NUM" ]; then
       echo "  [ci] PR #${PR_NUM} 暂无 checks，继续等待..."
     else
       total=$(echo "$out" | jq 'length')
-      failed=$(echo "$out" | jq '[.[] | select(.bucket == "fail")] | length')
+      failed=$(echo "$out" | jq '[.[] | select(.bucket != "pass" and .bucket != "skipping" and .bucket != "pending")] | length')
       pending=$(echo "$out" | jq '[.[] | select(.bucket == "pending")] | length')
       echo "  [ci] PR#${PR_NUM} total=${total} pending=${pending} failed=${failed} (elapsed=${elapsed}s)"
       echo "$out" | jq -r '.[] | "  - \(.name): \(.bucket)"'
       if [ "$failed" -gt 0 ]; then
-        echo "$out" | jq -r '.[] | select(.bucket == "fail") | "  ✗ \(.name) → \(.link // "")"'
+        echo "$out" | jq -r '.[] | select(.bucket != "pass" and .bucket != "skipping" and .bucket != "pending") | "  ✗ \(.name) [\(.bucket)] → \(.link // "")"'
         echo "CI_FAIL:${failed}/${total}:pr=${PR_NUM}"
         exit 1
       fi
       if [ "$pending" -eq 0 ] && [ "$total" -gt 0 ]; then
-        # 全部非失败且无非完成态 → 视为通过（含 pass/skipping/cancel 等非 fail 非 pending 桶）
+        # 无失败/取消/未知状态且无 pending → 视为通过（仅 pass/skipping）
         echo "CI_PASS:${total}/${total}:pr=${PR_NUM}"
         exit 0
       fi

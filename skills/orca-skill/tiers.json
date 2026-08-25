@@ -1,7 +1,32 @@
 {
+  "_agentModels": [
+    "Kimi Code — kimi -m <别名>(默认:deepseek-v4-pro)",
+    " - 模型:youpai-dp/deepseek-v4-pro、youpai-dp/deepseek-v4-flash、youpai/kimi-k2.7-code、deepseek/deepseek-v4-flash、deepseek/deepseek-v4-pro",
+    "",
+    "Claude Code — claude --model <别名或全名>(默认:sonnet)",
+    " - 模型:sonnet、opus、haiku、claude-sonnet-5、claude-opus-5、claude-haiku-4-5",
+    "",
+    "Codex — codex -m <slug>(默认:gpt-5.6-sol)",
+    " - 模型:gpt-5.6-sol、gpt-5.5、gpt-5.4、gpt-5.2",
+    "",
+    "Grok — grok -m <ID>(默认:youpai-grok-4.6)",
+    " - 模型:youpai-grok-4.6、grok-4.6、grok-4.5",
+    "",
+    "OpenCode — opencode run -m <provider>/<model>",
+    " - 模型:opencode/claude-sonnet-5、opencode/claude-opus-5、opencode/gpt-5.1-codex-max、opencode/deepseek-v4-pro、opencode/glm-5.2、opencode/gemini-3.1-pro …",
+    "",
+    "MiMo Code — mimo run -m <provider>/<model>",
+    " - 模型:mimo/mimo-auto、xiaomi/mimo-v2.5、xiaomi/mimo-v2.5-pro、xiaomi/mimo-v2.5-pro-ultraspeed",
+    "",
+    "Pi — pi --provider <名> --model <pattern>(默认:zai-coding-cn/glm-5.3)",
+    " - 模型:zai-coding-cn/glm-5.3、jojo-gpt/gpt-5.4、jojo-gpt/gpt-5.5、jojo-CC/claude-sonnet-5、jojo-CC/claude-opus-5、youpai/gpt-5.6-sol、new-provider/glm-5.3、deepseek/deepseek-v4-pro",
+    "",
+    "OMP — omp --model <模糊匹配>(默认:youpai-dp/deepseek-v4-flash)",
+    " - 模型:youpai-dp/deepseek-v4-flash、youpai-dp/deepseek-v4-pro"
+  ],
   "tiers": {
-    "simple":  { "controller": "opencode -m opencode/hy3-free",            "worker": "kimi" },
-    "medium":  { "controller": "opencode -m opencode/nemotron-3-ultra-free", "worker": "claude" },
-    "complex": { "controller": "opencode -m opencode/mimo-v2.5-free",       "worker": "codex" }
+    "simple":  { "controller": "opencode -m opencode/hy3-free",            "worker": "omp" },
+    "medium":  { "controller": "opencode -m opencode/mimo-v2.5-free", "worker": "kimi" },
+    "complex": { "controller": "omp --model youpai-dp/deepseek-v4-pro",       "worker": "codex" }
   }
 }

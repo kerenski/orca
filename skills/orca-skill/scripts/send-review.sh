@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # send-review.sh —— 向 worker 发第 N 轮 review 修复意见（固定话术框架 + 意见文件内容）
-# 话术要点来自 方案/Orca两层编排闭环流程-v2.md §7（内置在脚本里，controller 无需记忆）
+# 话术要点来自 docs/Orca两层编排闭环流程-v2.md §7（内置在脚本里，controller 无需记忆）
 #
 # 用法：bash $HOME/.orca-skill/scripts/send-review.sh --issue <n> --card <c> --round <N> --worker <handle> --file <意见md>
 # 输出：REVIEW_SENT:<issue>-<card> round=<N> -> <handle>
@@ -52,18 +52,55 @@ MSG="【Code Review #${ROUND} 修复任务 issue #${ISSUE} / ${CARD}】
 ${REVIEW_BODY}
 
 【修复要求】
-1. 逐条修复上述意见；全部改完后本地检查链必须全绿：ruff check && mypy app && pytest。
+1. 逐条修复上述意见。
 2. 追加开发日志（开发日志/$(date +%Y-%m-%d)/${ISSUE}-${CARD}.md）：
    锚点必须是独立完整的一行：「## Code Review #${ROUND}」，其下写：本轮问题 / 修复方式 / commit 短哈希。
 3. git add -A && git commit -m \"${ISSUE} ${CARD}: review #${ROUND} 修复\" && git push origin HEAD
-4. 完成后只回复：「review #${ROUND} 修复完成，等待复核」。"
+4. 完成后只回复：「review #${ROUND} 修复完成，等待复核」。
+5. push 成功后必须立即回敲 controller（这是 controller 结束回合后被唤醒的唯一快路径；看门狗最多延迟 5 分钟代发兜底）：
+   CTRL_HANDLE=$(cat /tmp/${CARD}/controller.handle 2>/dev/null)
+   [ -n \"\$CTRL_HANDLE\" ] && orca terminal send --terminal \"\$CTRL_HANDLE\" \
+     --text \"DEV_SIGNAL ${CARD} round=${ROUND} head=\$(git rev-parse --short HEAD)\" --enter
+   （文件不存在或发送失败则跳过，继续完成自身收尾即可）"
 
 _send() {
   orca terminal send --terminal "$HANDLE" --text "$MSG" --enter --json >/dev/null 2>&1
 }
 
+# baseline 在 send 之前实测（此刻 worker 尚未收到本轮意见，ahead 稳定），显式传给看门狗与输出，避免 send 后双实测 race
+BASELINE_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+
+WATCHDOG="$HOME/.orca-skill/scripts/wait-dev-watchdog.sh"
+STATE_DIR="/tmp/${CARD}"
+
+# 落盘自动化：send 成功后脚本已知全部字段，直接写 card-state.md（controller 无需再手写本轮落盘，省一个调用轮次）
+write_state() {
+  cat > "${STATE_DIR}/card-state.md" <<EOF
+card=${CARD} issue=#${ISSUE}
+当前步骤=${1}
+worker=${HANDLE} baseline_ahead=${BASELINE_AHEAD} round=${2}
+PR=${3:-无}
+EOF
+}
+
+start_watchdog() {
+  [ -f "$WATCHDOG" ] || { echo "  [watchdog] 脚本缺失 ${WATCHDOG}，跳过（controller 需自行轮询兜底）" >&2; return; }
+  mkdir -p "$STATE_DIR"
+  # 换轮：杀掉旧看门狗（其 baseline/round 已过时；TERM 延迟时旧进程靠 pid 自查退出）
+  if [ -f "${STATE_DIR}/watchdog.pid" ]; then
+    kill "$(cat "${STATE_DIR}/watchdog.pid" 2>/dev/null)" 2>/dev/null || true
+    rm -f "${STATE_DIR}/watchdog.pid"
+  fi
+  nohup bash "$WATCHDOG" --card "$CARD" --issue "$ISSUE" --round "$ROUND" --worker "$HANDLE" --baseline "$BASELINE_AHEAD" \
+    >>"${STATE_DIR}/watchdog.log" 2>&1 &
+  echo "  [watchdog] 已启动 baseline=${BASELINE_AHEAD}（兜底代发 DEV_SIGNAL；controller 落盘 card-state 后即可结束回合）"
+}
+
 if _send; then
   echo "REVIEW_SENT:${ISSUE}-${CARD} round=${ROUND} -> ${HANDLE}"
+  write_state 4 "$ROUND"
+  echo "  [state] card-state.md 已落盘（步骤 4，等待 DEV_SIGNAL）"
+  start_watchdog
   exit 0
 fi
 
@@ -76,6 +113,9 @@ if [ "$ALIVE" -gt 0 ]; then
   sleep 3
   if _send; then
     echo "REVIEW_SENT:${ISSUE}-${CARD} round=${ROUND} -> ${HANDLE}（重试成功）"
+    write_state 4 "$ROUND"
+    echo "  [state] card-state.md 已落盘（步骤 4，等待 DEV_SIGNAL）"
+    start_watchdog
     exit 0
   fi
   echo "ERROR: 发送失败但 worker ${HANDLE} 仍在运行（可能 TUI 忙）。请稍后重发本命令，勿 --force 重建。" >&2

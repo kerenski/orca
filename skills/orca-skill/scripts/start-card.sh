@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # start-card.sh —— 开卡唯一入口：建 worktree + 起 controller + 注入初始指令
-# 设计规格：方案/Orca两层编排闭环流程-v2.md §6
+# 设计规格：docs/Orca两层编排闭环流程-v2.md §6
 #
 # 用法（在仓库主 worktree 根目录执行）：
 #   bash $HOME/.orca-skill/scripts/start-card.sh --issue <n> --card <c> --tier simple|medium|complex \
@@ -79,18 +79,29 @@ TPL_FILE="${SCRIPT_DIR}/../templates/controller-prompt.tpl.md"
 [ -f "$TPL_FILE" ] || { echo "ERROR: 模板缺失 $TPL_FILE" >&2; exit 1; }
 
 REPO_SEL="path:$(pwd)"
+# fork 仓库（origin）：渲染进模板 {{FORK_REPO}}，controller 的 gh pr/issue 命令显式 -R 指向它
+# （多 remote 下 gh 偏好 upstream>origin，不显式指向会把 issue/PR 开到上游）
+FORK_REPO=$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]([^/]+)/([^/]+)#\1/\2#' | sed 's#\.git$##')
+if [ -z "$FORK_REPO" ] || [[ "$FORK_REPO" != *"/"* ]]; then
+  echo "ERROR: 无法从 origin remote 解析 fork 仓库（git remote get-url origin）" >&2; exit 1
+fi
 # worktree 必须从当前开发分支切出（本 fork 的开发在 wecir-dev-v*，Orca 默认 base 是 origin/main，会缺技能与 M1 代码）
 BASE_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || true)"
 [ -n "$BASE_BRANCH" ] || { echo "ERROR: 无法确定当前分支（需在主 worktree 的命名分支上运行）" >&2; exit 1; }
 
-# ---- 孤儿检查：同名 worktree（displayName == card） ----
+# ---- 孤儿检查：同名 worktree（displayName == card 或 card-<序号>；Orca 对重名自动加序号后缀） ----
 OLD_PATH=$(orca worktree list --json 2>/dev/null | jq -r \
-  ".result.worktrees[]? | select(.displayName == \"${CARD}\" and .isArchived != true) | .path" | head -1)
+  ".result.worktrees[]? | select((.displayName == \"${CARD}\" or (.displayName | test(\"^${CARD}-[0-9]+$\"))) and .isArchived != true) | .path" | head -1)
 if [ -n "$OLD_PATH" ]; then
   if [ "$FORCE" -eq 1 ]; then
     echo "  [cleanup] 发现孤儿 worktree ${CARD}，--force 清理中：$OLD_PATH"
+    # 先杀看门狗（它依赖 worktree 的 git 状态与 /tmp 状态文件），再删 worktree，最后清状态目录，避免旧卡残留污染重开的新卡
+    if [ -f "/tmp/${CARD}/watchdog.pid" ]; then
+      kill "$(cat "/tmp/${CARD}/watchdog.pid" 2>/dev/null)" 2>/dev/null || true
+    fi
     orca worktree rm --worktree "path:${OLD_PATH}" --force --json >/dev/null \
       || { echo "ERROR: 清理失败，请手动执行：orca worktree rm --worktree path:${OLD_PATH} --force" >&2; exit 1; }
+    rm -rf "/tmp/${CARD}"
     sleep 2
   else
     echo "ABORT: worktree ${CARD} 已存在（$OLD_PATH）。确认废弃请加 --force 重开，或换卡号（如 ${CARD}-r1）" >&2
@@ -119,12 +130,17 @@ if [ -z "$CTRL_HANDLE" ] || [ "$CTRL_HANDLE" = "null" ]; then
 fi
 echo "  [2/4] controller 终端：${CTRL_HANDLE}"
 
+# ---- 写 controller.handle（worker 回敲与看门狗通知的唯一依据；标题反查不可靠——CLI 会覆盖标题） ----
+mkdir -p "/tmp/${CARD}"
+echo "$CTRL_HANDLE" > "/tmp/${CARD}/controller.handle"
+
 # ---- 渲染模板 ----
 echo "  [3/4] 渲染初始指令模板..."
 PROMPT_FILE="/tmp/ctrl_prompt_${CARD}.txt"
 sed -e "s/{{ISSUE}}/${ISSUE}/g" \
     -e "s/{{CARD}}/${CARD}/g" \
     -e "s/{{WORKER_AGENT}}/${WORKER_AGENT}/g" \
+    -e "s#{{FORK_REPO}}#${FORK_REPO}#g" \
     "$TPL_FILE" > "$PROMPT_FILE"
 
 # ---- 等待并注入初始指令（以「指令内容真实出现在屏幕」为成功判据） ----
