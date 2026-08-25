@@ -1,0 +1,6 @@
+{
+  "_comment": "orca-skill 开卡质量闸配置（run-checks.sh 层 1，优先于栈探测）。check_cmd 格式：每行 'name:command'。tier 链=全量三闸（controller 第 4 步复核对账用）；fast 链=changed 增量（worker 迭代自检用，失败时兜底跑全量）。",
+  "check_cmd": "typecheck:pnpm run typecheck\nlint:pnpm run lint\ntest:pnpm run test",
+  "check_cmd_fast": "typecheck:pnpm run typecheck\nlint:pnpm run check:code-quality:changed",
+  "redline_doc": ""
+}
