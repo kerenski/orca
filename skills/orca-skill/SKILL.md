@@ -30,7 +30,7 @@ description: 开卡 SOP。用户说「开卡 / 跑一张卡 / 跑 issue #N / sta
 3. 起跑宣言（issue 评论，可并入看板记录）：
    `gh issue comment <N> --body "🚀 起跑：<card>，难度<档>，组合 <controller>/<worker>，理由：<一句话>"`
 4. 调脚本（在主 worktree 根）：
-   `bash skills/orca-skill/scripts/start-card.sh --issue <N> --card <card> --tier <simple|medium|complex>`
+   `bash $HOME/.orca-skill/scripts/start-card.sh --issue <N> --card <card> --tier <simple|medium|complex>`
 5. 把脚本输出的 `CARD_STARTED` 摘要原样转述给用户，**然后停止**
 
 ## 判档表
