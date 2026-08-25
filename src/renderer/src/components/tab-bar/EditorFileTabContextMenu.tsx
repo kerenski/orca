@@ -3,6 +3,7 @@ import {
   CopyX,
   ExternalLink,
   Eye,
+  Hash,
   ListX,
   PanelLeftClose,
   PanelRightClose,
@@ -27,6 +28,7 @@ import { shouldBlockEditorTabLocalOpen } from './editor-tab-local-open-guard'
 import { translate } from '@/i18n/i18n'
 import { TabWorkspaceLayoutMenuSection } from './TabWorkspaceLayoutMenuSection'
 import { TAB_CONTEXT_MENU_CONTENT_CLASS } from './tab-context-menu-sizing'
+import { formatPathLineReference } from '@/components/editor/line-copy-path'
 
 const isMac = navigator.userAgent.includes('Mac')
 const isLinux = navigator.userAgent.includes('Linux')
@@ -105,6 +107,9 @@ export function EditorFileTabContextMenu({
   const renameShortcut = useOptionalShortcutLabel('tab.rename')
   const closeShortcut = useOptionalShortcutLabel('tab.close')
   const closeAllShortcut = useOptionalShortcutLabel('tab.closeAll')
+  const editorCursorLine = useAppStore((s) => s.editorCursorLine)
+  const isDiff = file.mode === 'diff'
+  const cursorLine = editorCursorLine[file.id] ?? 1
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
@@ -232,6 +237,36 @@ export function EditorFileTabContextMenu({
             'Copy Relative Path'
           )}
         </DropdownMenuItem>
+        {!isDiff && (
+          <>
+            <DropdownMenuItem
+              onSelect={() => {
+                void window.api.ui.writeClipboardText(
+                  formatPathLineReference(file.filePath, cursorLine)
+                )
+              }}
+            >
+              <Hash className="size-3.5" />
+              {translate(
+                'auto.components.tab.bar.EditorFileTabContextMenu.copyPathToLine',
+                'Copy Path to Line'
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                void window.api.ui.writeClipboardText(
+                  formatPathLineReference(file.relativePath, cursorLine)
+                )
+              }}
+            >
+              <Hash className="size-3.5" />
+              {translate(
+                'auto.components.tab.bar.EditorFileTabContextMenu.copyRelativePathToLine',
+                'Copy Relative Path to Line'
+              )}
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
