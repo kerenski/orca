@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "requestId": "req-61",
+  "ok": false,
+  "error": {
+    "code": "script_missing",
+    "message": "Controller script was not found",
+    "retryable": false
+  }
+}
