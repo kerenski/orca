@@ -1,0 +1,7 @@
+{
+  "tiers": {
+    "simple":  { "controller": "opencode -m opencode/hy3-free",            "worker": "kimi" },
+    "medium":  { "controller": "opencode -m opencode/nemotron-3-ultra-free", "worker": "claude" },
+    "complex": { "controller": "opencode -m opencode/mimo-v2.5-free",       "worker": "codex" }
+  }
+}
