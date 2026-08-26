@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "cardId": "card-legacy",
+  "name": "legacy-card",
+  "repository": {
+    "repositoryId": "repo-legacy",
+    "path": "/workspace/orca",
+    "executionHost": "local"
+  },
+  "reference": {
+    "kind": "pull_request",
+    "number": 7,
+    "owner": "kerenski",
+    "repository": "orca"
+  },
+  "priority": "normal",
+  "dependencies": [],
+  "status": "queued",
+  "createdAt": "2026-08-26T00:00:00.000Z",
+  "updatedAt": "2026-08-26T00:00:00.000Z"
+}
