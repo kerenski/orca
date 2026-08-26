@@ -1,6 +1,6 @@
 import type { Store } from '../persistence'
 import { getGitHubRepoConnectionId } from '../ipc/github-repo-routing'
-import { getLocalPtyProvider } from '../ipc/pty/provider/registry'
+import { getLocalPtyProvider } from '../ipc/pty'
 import { getGitHubDataBatch, listGitHubData } from './github-data-adapter'
 import { ControllerMonitor } from './controller-monitor'
 import { createCardRunner } from './card-runner'

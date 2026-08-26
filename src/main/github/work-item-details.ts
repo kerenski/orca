@@ -27,6 +27,7 @@ import {
 } from './gh-utils'
 import { getWorkItem, getPRChecks, getPRComments } from './client'
 import {
+  getIssueGitHubApiRepository,
   githubHostExecOptions,
   resolveGitHubRepoExecution,
   type GitHubApiRepository
@@ -1062,14 +1063,8 @@ export async function getWorkItemDetails(
     return null
   }
 
-  let resolvedRepository: GitHubApiRepository | null = null
+  let resolvedRepository: GitHubApiRepository | null
   if (item.type === 'issue') {
-    resolvedRepository = issueRepo ?? item.issueRepo ?? null
-    if (!resolvedRepository) {
-      throw new Error(
-        `Issue #${number} repository identity unavailable. Cannot load details without confirmed source repository. Please refresh the list.`
-      )
-    }
     if (
       issueRepo &&
       item.issueRepo &&
@@ -1081,13 +1076,9 @@ export async function getWorkItemDetails(
         `Issue #${number} repository identity mismatch: requested ${issueRepo.owner}/${issueRepo.repo} but item resolved to ${item.issueRepo.owner}/${item.issueRepo.repo}. Refusing cross-repository details fetch.`
       )
     }
+    resolvedRepository =
+      issueRepo ?? (await getIssueGitHubApiRepository(repoPath, connectionId, localGitOptions))
   } else {
-    resolvedRepository = prRepo ?? item.prRepo ?? null
-    if (!resolvedRepository) {
-      throw new Error(
-        `PR #${number} repository identity unavailable. Cannot load details without confirmed source repository. Please refresh the list.`
-      )
-    }
     if (
       prRepo &&
       item.prRepo &&
@@ -1099,6 +1090,10 @@ export async function getWorkItemDetails(
         `PR #${number} repository identity mismatch: requested ${prRepo.owner}/${prRepo.repo} but item resolved to ${item.prRepo.owner}/${item.prRepo.repo}. Refusing cross-repository details fetch.`
       )
     }
+    resolvedRepository = prRepo
+      ? prRepo
+      : (await resolveGitHubRepoExecution(repoPath, item.prRepo, connectionId, localGitOptions))
+          .ownerRepo
   }
 
   if (item.type === 'issue') {

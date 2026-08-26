@@ -66,7 +66,7 @@ async function handle(
   trustedWebContentsId: number | null,
   raw: unknown,
   schemas: OperationSchemas,
-  operation: (request: ParsedRequest) => Promise<unknown> | unknown
+  operation: (request: ParsedRequest) => unknown
 ): Promise<WecirDevResponse<unknown>> {
   if (
     !isTrustedUIRenderer(event.sender) ||

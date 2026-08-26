@@ -1,9 +1,4 @@
 import { join } from 'node:path'
-import {
-  getAppEnvironment,
-  hasAppEnvironment,
-  type AppEnvironment
-} from '../../shared/app-environment'
 
 const START_CARD_RELATIVE_PATH = join('scripts', 'start-card.sh')
 
@@ -13,8 +8,13 @@ type CardSkillResourcePathOptions = {
   resourcesPath?: string
 }
 
+type CardSkillRuntimeEnvironment = {
+  getAppPath(): string
+  isPackaged(): boolean
+}
+
 type CardSkillRuntimePathOptions = {
-  environment?: Pick<AppEnvironment, 'getAppPath' | 'isPackaged'>
+  environment?: CardSkillRuntimeEnvironment
   cwd: string
   resourcesPath?: string
 }
@@ -38,9 +38,20 @@ export function resolveCardSkillRuntimePath(options: CardSkillRuntimePathOptions
 }
 
 export function getCardSkillScriptPath(): string {
+  const app = loadElectronApp()
   return resolveCardSkillRuntimePath({
-    environment: hasAppEnvironment() ? getAppEnvironment() : undefined,
+    environment: app
+      ? { getAppPath: () => app.getAppPath(), isPackaged: () => app.isPackaged }
+      : undefined,
     cwd: process.cwd(),
     resourcesPath: process.resourcesPath
   })
+}
+
+function loadElectronApp(): { getAppPath(): string; isPackaged: boolean } | null {
+  try {
+    return require('electron').app ?? null
+  } catch {
+    return null
+  }
 }
