@@ -39,11 +39,16 @@ export function getWorkItemDetailsCacheKey(args: {
   sourceCacheScope?: string | null
   type: 'issue' | 'pr'
   number: number
+  ownerRepo?: string
 }): string {
   // Why: `\0` separator avoids collisions between key fields that may contain `:` or `/`.
+  // Why: ownerRepo distinguishes same-number items from different remotes (origin vs upstream Issue #123).
   const keyParts = args.sourceCacheScope
     ? [args.repoId, args.sourceCacheScope, args.issueSourcePreference ?? 'auto', args.type]
     : [args.repoId, args.issueSourcePreference ?? 'auto', args.type]
+  if (args.ownerRepo) {
+    keyParts.push(args.ownerRepo)
+  }
   return [...keyParts, args.number].join('\0')
 }
 

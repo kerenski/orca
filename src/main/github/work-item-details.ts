@@ -11,7 +11,11 @@ import type {
   GitHubPRFileContents,
   GitHubPRFileViewedState
 } from '../../shared/github/pull-request-types'
-import type { GitHubWorkItem, GitHubWorkItemDetails } from '../../shared/github/work-item-types'
+import type {
+  GitHubRepositoryIdentity,
+  GitHubWorkItem,
+  GitHubWorkItemDetails
+} from '../../shared/github/work-item-types'
 import type { IssueSourcePreference } from '../../shared/repo-types'
 import {
   ghExecFileAsync,
@@ -23,7 +27,6 @@ import {
 } from './gh-utils'
 import { getWorkItem, getPRChecks, getPRComments } from './client'
 import {
-  getIssueGitHubApiRepository,
   githubHostExecOptions,
   resolveGitHubRepoExecution,
   type GitHubApiRepository
@@ -1050,25 +1053,53 @@ export async function getWorkItemDetails(
   type?: 'issue' | 'pr',
   connectionId?: string | null,
   localGitOptions: LocalGitExecOptions = {},
-  preference?: IssueSourcePreference
+  preference?: IssueSourcePreference,
+  issueRepo?: GitHubRepositoryIdentity,
+  prRepo?: GitHubRepositoryIdentity
 ): Promise<GitHubWorkItemDetails | null> {
-  const item: Omit<GitHubWorkItem, 'repoId'> | null = await getWorkItem(
-    repoPath,
-    number,
-    type,
-    connectionId,
-    localGitOptions,
-    preference
-  )
+  const item = await getWorkItem(repoPath, number, type, connectionId, localGitOptions, preference)
   if (!item) {
     return null
   }
 
-  const resolvedRepository =
-    item.type === 'issue'
-      ? await getIssueGitHubApiRepository(repoPath, connectionId, localGitOptions)
-      : (await resolveGitHubRepoExecution(repoPath, item.prRepo, connectionId, localGitOptions))
-          .ownerRepo
+  let resolvedRepository: GitHubApiRepository | null = null
+  if (item.type === 'issue') {
+    resolvedRepository = issueRepo ?? item.issueRepo ?? null
+    if (!resolvedRepository) {
+      throw new Error(
+        `Issue #${number} repository identity unavailable. Cannot load details without confirmed source repository. Please refresh the list.`
+      )
+    }
+    if (
+      issueRepo &&
+      item.issueRepo &&
+      (issueRepo.owner !== item.issueRepo.owner ||
+        issueRepo.repo !== item.issueRepo.repo ||
+        issueRepo.host !== item.issueRepo.host)
+    ) {
+      throw new Error(
+        `Issue #${number} repository identity mismatch: requested ${issueRepo.owner}/${issueRepo.repo} but item resolved to ${item.issueRepo.owner}/${item.issueRepo.repo}. Refusing cross-repository details fetch.`
+      )
+    }
+  } else {
+    resolvedRepository = prRepo ?? item.prRepo ?? null
+    if (!resolvedRepository) {
+      throw new Error(
+        `PR #${number} repository identity unavailable. Cannot load details without confirmed source repository. Please refresh the list.`
+      )
+    }
+    if (
+      prRepo &&
+      item.prRepo &&
+      (prRepo.owner !== item.prRepo.owner ||
+        prRepo.repo !== item.prRepo.repo ||
+        prRepo.host !== item.prRepo.host)
+    ) {
+      throw new Error(
+        `PR #${number} repository identity mismatch: requested ${prRepo.owner}/${prRepo.repo} but item resolved to ${item.prRepo.owner}/${item.prRepo.repo}. Refusing cross-repository details fetch.`
+      )
+    }
+  }
 
   if (item.type === 'issue') {
     return withWorkItemDetailsPermit(async () => {

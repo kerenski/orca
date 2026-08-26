@@ -92,7 +92,7 @@ vi.mock('./github-api-repository', async (importOriginal) => {
 import { countWorkItems, getWorkItem, listWorkItems, _resetOwnerRepoCache } from './client'
 
 const PR_LIST_FIELDS =
-  'number,title,state,url,labels,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests'
+  'number,title,state,url,labels,milestone,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests,assignees'
 
 function issueSearchArgs(
   ownerRepo: string,
@@ -104,7 +104,7 @@ function issueSearchArgs(
     ...(options.noCache ? [] : ['--cache', '120s']),
     `search/issues?q=${encodeURIComponent(`repo:${ownerRepo} ${query}`)}&sort=created&order=desc&per_page=10&page=1`,
     '--jq',
-    '.items'
+    '{items: .items, total_count: .total_count, incomplete_results: .incomplete_results}'
   ]
 }
 

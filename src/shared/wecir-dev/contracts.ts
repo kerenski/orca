@@ -63,6 +63,26 @@ export type WecirDevDependencyRelation = {
   note?: string
 }
 
+export type WecirDevRelationSource = {
+  kind: 'cross_reference' | 'explicit_text' | 'label'
+  relation: 'blocks' | 'blocked_by'
+  targetNumber: number
+  text?: string
+}
+
+export type WecirDevDependencyAnalysis = {
+  schemaVersion: WecirDevSchemaVersion
+  issueNumber: number
+  dependsOn: number[]
+  blocks: number[]
+  relationSources: WecirDevRelationSource[]
+  topoLevel: number
+  blockedCount: number
+  cycleDetected: boolean
+  cycleNodes: number[]
+  executableOrder: number[]
+}
+
 export type WecirDevAnalysisResult = {
   summary: string
   suggestedPriority: WecirDevPriority
@@ -78,6 +98,27 @@ export type WecirDevError = {
   retryable: boolean
   details?: Record<string, string | number | boolean>
 }
+
+export type WecirDevStartCardSuccess = {
+  schemaVersion: WecirDevSchemaVersion
+  ok: true
+  controllerPtyId: string
+  worktreeId: string
+  worktreePath: string
+  branch: string
+  workerAgent: string
+  issue: number
+  card: string
+  tier: 'simple' | 'medium' | 'complex'
+}
+
+export type WecirDevStartCardFailure = {
+  schemaVersion: WecirDevSchemaVersion
+  ok: false
+  error: WecirDevError
+}
+
+export type WecirDevStartCardScriptResult = WecirDevStartCardSuccess | WecirDevStartCardFailure
 
 export type WecirDevCardRecord = {
   schemaVersion: WecirDevSchemaVersion

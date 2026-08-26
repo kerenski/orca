@@ -621,6 +621,16 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+  previousViewBeforeCards:
+    | 'terminal'
+    | 'settings'
+    | 'tasks'
+    | 'activity'
+    | 'automations'
+    | 'space'
+    | 'skills'
+    | 'artifacts'
+    | 'mobile'
   previousViewBeforeSettings:
     | 'terminal'
     | 'tasks'
@@ -746,6 +756,8 @@ export type UISlice = {
     options?: { recordTasksInteraction?: boolean }
   ) => void
   closeTaskPage: () => void
+  openWecirDevCardPage: () => void
+  closeWecirDevCardPage: () => void
   openActivityPage: () => void
   closeActivityPage: () => void
   selectedAutomationId: string | null
@@ -1263,6 +1275,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   activeView: 'terminal',
   previousViewBeforeTasks: 'terminal',
+  previousViewBeforeCards: 'terminal',
   previousViewBeforeSettings: 'terminal',
   previousViewBeforeActivity: 'terminal',
   previousViewBeforeAutomations: 'terminal',
@@ -1455,6 +1468,17 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         worktreeNavHistoryIndex: nextHistoryIndex
       }
     }),
+  openWecirDevCardPage: () => {
+    set((state) => ({
+      activeView: 'cards',
+      previousViewBeforeCards:
+        state.activeView === 'cards' ? state.previousViewBeforeCards : state.activeView
+    }))
+  },
+  closeWecirDevCardPage: () =>
+    set((state) => ({
+      activeView: state.previousViewBeforeCards
+    })),
   openActivityPage: () => {
     if (get().settings?.experimentalActivity !== true) {
       return

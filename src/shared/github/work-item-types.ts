@@ -13,6 +13,8 @@ import type {
   ProviderCheckSummary
 } from './pull-request-types'
 
+export type { GitHubRepositoryIdentity } from './pull-request-types'
+
 export type GitHubWorkItem = {
   id: string
   type: 'issue' | 'pr'
@@ -21,6 +23,7 @@ export type GitHubWorkItem = {
   state: 'open' | 'closed' | 'merged' | 'draft'
   url: string
   labels: string[]
+  milestone?: string | null
   updatedAt: string
   author: string | null
   // Why: GHE user logins don't exist on github.com, so the github.com/{login}.png
@@ -34,6 +37,7 @@ export type GitHubWorkItem = {
   // the cached check-runs endpoint instead of one `gh pr checks` call per row.
   headSha?: string
   prRepo?: GitHubRepositoryIdentity
+  issueRepo?: GitHubRepositoryIdentity
   additions?: number
   deletions?: number
   changedFiles?: number
@@ -117,6 +121,10 @@ export type ListWorkItemsResult<T> = {
   errors?: {
     issues?: ClassifiedError
     prs?: ClassifiedError
+  }
+  pagination?: {
+    issuesHasNext: boolean
+    prsHasNext: boolean
   }
   /** True when the user's per-repo preference was `'upstream'` but no upstream
    *  remote is configured, so the resolver fell back to origin. Renderer uses

@@ -8,18 +8,25 @@ import {
   type WecirDevAnalysisResult,
   type WecirDevCardRecord,
   type WecirDevControllerInstruction,
+  type WecirDevDependencyAnalysis,
   type WecirDevDependencyRelation,
   type WecirDevError,
+  type WecirDevRelationSource,
   type WecirDevIssueReference,
   type WecirDevPage,
   type WecirDevQueueItem,
   type WecirDevRepositorySelection,
   type WecirDevRequest,
   type WecirDevResponse,
+  type WecirDevStartCardFailure,
+  type WecirDevStartCardScriptResult,
+  type WecirDevStartCardSuccess,
   type WecirDevStatusTransition
 } from './contracts'
 
-const CardName = z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/, 'Invalid card name')
+export const WecirDevCardNameSchema = z
+  .string()
+  .regex(/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/, 'Invalid card name')
 const Id = z.string().min(1).max(128)
 const IsoDate = z.iso.datetime({ offset: true })
 const SchemaVersion = z.literal(WECIR_DEV_SCHEMA_VERSION)
@@ -64,6 +71,30 @@ export const WecirDevDependencyRelationSchema: z.ZodType<WecirDevDependencyRelat
     message: 'Exactly one dependency target is required'
   })
 
+export const WecirDevRelationSourceSchema: z.ZodType<WecirDevRelationSource> = z
+  .object({
+    kind: z.enum(['cross_reference', 'explicit_text', 'label']),
+    relation: z.enum(['blocks', 'blocked_by']),
+    targetNumber: z.number().int().positive().max(1_000_000_000),
+    text: z.string().max(500).optional()
+  })
+  .strict()
+
+export const WecirDevDependencyAnalysisSchema: z.ZodType<WecirDevDependencyAnalysis> = z
+  .object({
+    schemaVersion: SchemaVersion,
+    issueNumber: z.number().int().positive().max(1_000_000_000),
+    dependsOn: z.array(z.number().int().positive().max(1_000_000_000)).max(128),
+    blocks: z.array(z.number().int().positive().max(1_000_000_000)).max(128),
+    relationSources: z.array(WecirDevRelationSourceSchema).max(128),
+    topoLevel: z.number().int().nonnegative().max(1_000_000_000),
+    blockedCount: z.number().int().nonnegative().max(1_000_000_000),
+    cycleDetected: z.boolean(),
+    cycleNodes: z.array(z.number().int().positive().max(1_000_000_000)).max(128),
+    executableOrder: z.array(z.number().int().positive().max(1_000_000_000)).max(128)
+  })
+  .strict()
+
 export const WecirDevAnalysisResultSchema: z.ZodType<WecirDevAnalysisResult> = z
   .object({
     summary: z.string().min(1).max(10_000),
@@ -84,11 +115,39 @@ export const WecirDevErrorSchema: z.ZodType<WecirDevError> = z
   })
   .strict()
 
+export const WecirDevStartCardSuccessSchema = z
+  .object({
+    schemaVersion: SchemaVersion,
+    ok: z.literal(true),
+    controllerPtyId: Id,
+    worktreeId: Id,
+    worktreePath: z.string().min(1).max(4096),
+    branch: z.string().min(1).max(255),
+    workerAgent: z.string().min(1).max(512),
+    issue: z.number().int().positive().max(1_000_000_000),
+    card: WecirDevCardNameSchema,
+    tier: z.enum(['simple', 'medium', 'complex'])
+  })
+  .strict() satisfies z.ZodType<WecirDevStartCardSuccess>
+
+export const WecirDevStartCardFailureSchema = z
+  .object({
+    schemaVersion: SchemaVersion,
+    ok: z.literal(false),
+    error: WecirDevErrorSchema
+  })
+  .strict() satisfies z.ZodType<WecirDevStartCardFailure>
+
+export const WecirDevStartCardScriptResultSchema = z.discriminatedUnion('ok', [
+  WecirDevStartCardSuccessSchema,
+  WecirDevStartCardFailureSchema
+]) satisfies z.ZodType<WecirDevStartCardScriptResult>
+
 export const WecirDevCardRecordSchema: z.ZodType<WecirDevCardRecord> = z
   .object({
     schemaVersion: SchemaVersion,
     cardId: Id,
-    name: CardName,
+    name: WecirDevCardNameSchema,
     repository: WecirDevRepositorySelectionSchema,
     reference: WecirDevIssueReferenceSchema,
     priority: WecirDevPrioritySchema,
@@ -201,3 +260,41 @@ export const WecirDevDangerousFieldNames = new Set([
   'password',
   'secret'
 ])
+
+export const WecirDevAnalyzeCardsPayloadSchema = z
+  .object({
+    repository: WecirDevRepositorySelectionSchema,
+    issueNumbers: z.array(z.number().int().positive()).max(200).optional(),
+    query: z.string().max(500).optional()
+  })
+  .strict()
+export const WecirDevStartCardPayloadSchema = z
+  .object({
+    repository: WecirDevRepositorySelectionSchema,
+    issueNumber: z.number().int().positive(),
+    card: WecirDevCardNameSchema,
+    tier: z.enum(['simple', 'medium', 'complex']).optional(),
+    force: z.boolean().optional()
+  })
+  .strict()
+export const WecirDevStartCardsBatchPayloadSchema = z
+  .object({
+    repository: WecirDevRepositorySelectionSchema,
+    cards: z.array(WecirDevStartCardPayloadSchema.omit({ repository: true })).max(50)
+  })
+  .strict()
+export const WecirDevGetCardStatusesPayloadSchema = z
+  .object({
+    repositoryId: Id,
+    cardIds: z.array(Id).max(200).optional()
+  })
+  .strict()
+export const WecirDevSendControllerCommandPayloadSchema = z
+  .object({
+    repositoryId: Id,
+    cardId: Id,
+    command: z.enum(['start', 'stop', 'retry', 'remove', 'refresh', 'approve_merge', 'mark_stale']),
+    expectedStatus: WecirDevStatusSchema.optional(),
+    reason: z.string().max(2000).optional()
+  })
+  .strict()
