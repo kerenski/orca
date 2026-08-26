@@ -28,6 +28,16 @@ export function mapIssueWorkItem(item: Record<string, unknown>): MainWorkItem {
           )
           .filter(Boolean)
       : [],
+    ...(item.milestone !== undefined
+      ? {
+          milestone:
+            typeof item.milestone === 'object' && item.milestone !== null
+              ? String((item.milestone as { title?: unknown }).title ?? '') || null
+              : typeof item.milestone === 'string'
+                ? item.milestone
+                : null
+        }
+      : {}),
     updatedAt: String(item.updated_at ?? item.updatedAt ?? ''),
     ...authorFieldsFromUnknown(item),
     ...(item.assignees !== undefined ? { assignees: usersFromUnknown(item.assignees) } : {})
@@ -85,6 +95,16 @@ export function mapPullRequestWorkItem(
           )
           .filter(Boolean)
       : [],
+    ...(item.milestone !== undefined
+      ? {
+          milestone:
+            typeof item.milestone === 'object' && item.milestone !== null
+              ? String((item.milestone as { title?: unknown }).title ?? '') || null
+              : typeof item.milestone === 'string'
+                ? item.milestone
+                : null
+        }
+      : {}),
     updatedAt: String(item.updated_at ?? item.updatedAt ?? ''),
     ...authorFieldsFromUnknown(item),
     branchName:

@@ -1462,6 +1462,15 @@ const api = {
       type?: 'issue' | 'pr'
     }): Promise<unknown> => ipcRenderer.invoke('gh:workItemDetails', args),
 
+    wecirDevCardData: (args: {
+      repoPath: string
+      repoId?: string
+      limit?: number
+      query?: string
+      page?: number
+      noCache?: boolean
+    }): Promise<unknown> => ipcRenderer.invoke('gh:wecirDevCardData', args),
+
     notifyWorkItemMutated: (args: {
       repoPath: string
       repoId?: string

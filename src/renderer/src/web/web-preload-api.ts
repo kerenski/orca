@@ -297,6 +297,7 @@ type WebGitHubRouteKey =
   | 'workItem'
   | 'workItemByOwnerRepo'
   | 'workItemDetails'
+  | 'wecirDevCardData'
   | 'prFileContents'
   | 'listIssues'
   | 'createIssue'
@@ -346,6 +347,7 @@ type WebGitHubRuntimeMethod =
   | 'github.workItem'
   | 'github.workItemByOwnerRepo'
   | 'github.workItemDetails'
+  | 'github.wecirDevCardData'
   | 'github.prFileContents'
   | 'github.listIssues'
   | 'github.createIssue'
@@ -448,6 +450,7 @@ export const GITHUB_WEB_RPC_METHODS = {
   workItem: 'github.workItem',
   workItemByOwnerRepo: 'github.workItemByOwnerRepo',
   workItemDetails: 'github.workItemDetails',
+  wecirDevCardData: 'github.wecirDevCardData',
   prFileContents: 'github.prFileContents',
   listIssues: 'github.listIssues',
   createIssue: 'github.createIssue',
@@ -2477,6 +2480,8 @@ function createGitHubApi(): WebGitHubApi {
       }),
     workItemDetails: (args) =>
       route<WebGitHubResult<'workItemDetails'>>(GITHUB_WEB_RPC_METHODS.workItemDetails, args),
+    wecirDevCardData: (args) =>
+      route<WebGitHubResult<'wecirDevCardData'>>(GITHUB_WEB_RPC_METHODS.wecirDevCardData, args),
     notifyWorkItemMutated: () => Promise.resolve(false),
     prFileContents: (args) =>
       route<WebGitHubResult<'prFileContents'>>(GITHUB_WEB_RPC_METHODS.prFileContents, args),

@@ -65,6 +65,7 @@ import {
   setPRRefreshOutcomeObserver
 } from '../github/pr-refresh-coordinator'
 import { getWorkItemDetails, getPRFileContents } from '../github/work-item-details'
+import { getWecirDevGitHubCardData } from '../github/wecir-dev-card-data'
 import { getRateLimit } from '../github/rate-limit'
 import { diagnoseGhAuth } from '../github/auth-diagnose'
 import {
@@ -500,6 +501,67 @@ export function registerGitHubHandlers(store: Store, stats: StatsCollector): voi
     const repo = assertRegisteredRepo(args, store)
     return dispatchWorkItem(args, repo, getWorkItemDetails, localGitOptionArgs(store, repo)[0])
   })
+
+  ipcMain.handle(
+    'gh:wecirDevCardData',
+    async (
+      _event,
+      args: {
+        repoPath: string
+        repoId?: string
+        limit?: number
+        query?: string
+        page?: number
+        noCache?: boolean
+      }
+    ) => {
+      const repo = assertRegisteredRepo(args, store)
+      const localGitOptions = localGitOptionArgs(store, repo)[0] ?? {}
+      return getWecirDevGitHubCardData(args, {
+        listWorkItems: (request) =>
+          listWorkItems(
+            repo.path,
+            request.limit,
+            request.query,
+            request.page,
+            repo.issueSourcePreference,
+            repoConnectionId(repo),
+            request.noCache,
+            localGitOptions
+          ),
+        getWorkItem: (number, type) =>
+          getWorkItem(
+            repo.path,
+            number,
+            type,
+            repoConnectionId(repo),
+            localGitOptions,
+            repo.issueSourcePreference
+          ),
+        getWorkItemDetails: (number, type) =>
+          getWorkItemDetails(
+            repo.path,
+            number,
+            type,
+            repoConnectionId(repo),
+            localGitOptions,
+            repo.issueSourcePreference
+          ),
+        getPRChecks: (number, headSha, prRepo) =>
+          getPRChecks(
+            repo.path,
+            number,
+            headSha,
+            prRepo ?? null,
+            { noCache: args.noCache },
+            repoConnectionId(repo),
+            localGitOptions
+          ),
+        getPRCheckDetails: (checkArgs) =>
+          getPRCheckDetails(repo.path, checkArgs, repoConnectionId(repo), localGitOptions)
+      })
+    }
+  )
 
   ipcMain.handle(
     'gh:notifyWorkItemMutated',

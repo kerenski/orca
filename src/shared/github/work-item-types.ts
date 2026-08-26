@@ -21,6 +21,7 @@ export type GitHubWorkItem = {
   state: 'open' | 'closed' | 'merged' | 'draft'
   url: string
   labels: string[]
+  milestone?: string | null
   updatedAt: string
   author: string | null
   // Why: GHE user logins don't exist on github.com, so the github.com/{login}.png
