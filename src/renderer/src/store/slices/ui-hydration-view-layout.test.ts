@@ -111,6 +111,14 @@ describe('createUISlice hydratePersistedUI', () => {
     expect(store.getState().activeView).toBe('tasks')
   })
 
+  it('restores the persisted cards view on hydration', () => {
+    const store = createUIStore()
+
+    store.getState().hydratePersistedUI(makePersistedUI({ activeView: 'cards' }), 'startup')
+
+    expect(store.getState().activeView).toBe('cards')
+  })
+
   it('falls back to terminal when persisted active view is missing (older data)', () => {
     const store = createUIStore()
     store.setState({ activeView: 'tasks' })

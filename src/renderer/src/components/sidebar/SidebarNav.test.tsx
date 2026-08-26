@@ -14,6 +14,7 @@ import { PSEUDO_LOCALIZATION_LOCALE } from '../../i18n/pseudo-localization'
 const mocks = vi.hoisted(() => ({
   state: {} as Record<string, unknown>,
   openTaskPage: vi.fn(),
+  openWecirDevCardPage: vi.fn(),
   openAutomationsPage: vi.fn(),
   openActivityPage: vi.fn(),
   openMobilePage: vi.fn(),
@@ -131,6 +132,7 @@ function setSidebarState({
     repos,
     activeView: 'worktrees',
     openTaskPage: mocks.openTaskPage,
+    openWecirDevCardPage: mocks.openWecirDevCardPage,
     openAutomationsPage: mocks.openAutomationsPage,
     openActivityPage: mocks.openActivityPage,
     openMobilePage: mocks.openMobilePage,
@@ -444,6 +446,18 @@ describe('SidebarNav', () => {
     expect(
       searchButton.compareDocumentPosition(tasksButton) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy()
+  })
+
+  it('keeps Cards and Tasks sidebar actions isolated', async () => {
+    const container = await renderSidebarNav()
+
+    await clickButton(getButtonByText(container, 'Cards'))
+    expect(mocks.openWecirDevCardPage).toHaveBeenCalledOnce()
+    expect(mocks.openTaskPage).not.toHaveBeenCalled()
+
+    await clickButton(getButtonByText(container, 'Tasks'))
+    expect(mocks.openTaskPage).toHaveBeenCalledOnce()
+    expect(mocks.openWecirDevCardPage).toHaveBeenCalledOnce()
   })
 
   it('hides the worktree palette shortcut until the search field is hovered or focused', async () => {

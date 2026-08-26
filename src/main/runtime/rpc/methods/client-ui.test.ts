@@ -586,6 +586,7 @@ describe('client UI RPC methods', () => {
     ['taskResumeState.jiraPreset', { taskResumeState: { jiraPreset: 'assigned' } }],
     ['taskResumeState.jiraQuery', { taskResumeState: { jiraQuery: 'ENG' } }],
     ['activeView', { activeView: 'tasks' }],
+    ['activeView.cards', { activeView: 'cards' }],
     ['showDotfilesByWorktree', { showDotfilesByWorktree: { 'repo::/worktree': true } }],
     ['setupGuideSidebarDismissed', { setupGuideSidebarDismissed: true }],
     ['setupGuideBrowserMilestoneMigrated', { setupGuideBrowserMilestoneMigrated: true }],

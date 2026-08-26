@@ -274,7 +274,9 @@ const WorktreeList = React.memo(function WorktreeList({
         rows={rowModel.sectionRows}
         // Why: full-page nav views aren't scoped to a worktree, so no sidebar card should look selected.
         activeWorktreeId={
-          activeView === 'tasks' || activeView === 'activity' ? null : currentSidebarWorktreeId
+          activeView === 'tasks' || activeView === 'cards' || activeView === 'activity'
+            ? null
+            : currentSidebarWorktreeId
         }
         activeWorkspaceExecutionHostId={activeWorkspaceExecutionHostId}
         currentWorktreeId={currentSidebarWorktreeId}

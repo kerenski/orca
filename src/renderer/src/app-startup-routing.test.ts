@@ -434,6 +434,16 @@ describe('renderer startup runtime routing', () => {
     expect(source).toContain('h-6 min-h-[24px] shrink-0 border-t border-border')
   })
 
+  it('lazy mounts the Cards page only for the cards top-level view', () => {
+    const source = readSource(WORKSPACE_SHELL_PATH)
+
+    expect(source).toContain(
+      "const WecirDevCardPage = lazy(() => import('../components/wecir-dev/WecirDevCardPage'))"
+    )
+    expect(source).toContain("activeView === 'cards' ? <WecirDevCardPage /> : null")
+    expect(source).toContain("activeView === 'tasks' ? <TaskPage /> : null")
+  })
+
   it('keeps activeView off the 150ms debounced UI writer hot path (#9002)', () => {
     const source = readSource(PERSISTED_UI_WRITER_PATH)
     const writerStart = source.indexOf('const timer = window.setTimeout(() => {')

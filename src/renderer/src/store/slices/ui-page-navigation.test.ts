@@ -311,6 +311,49 @@ describe('createUISlice settings navigation', () => {
 })
 
 describe('createUISlice page navigation history', () => {
+  it('keeps Cards navigation independent from Tasks page and drawer state', () => {
+    const store = createUIStore()
+    const workItem = makeGitHubWorkItem()
+    store.setState({
+      activeView: 'tasks',
+      taskPageData: { taskSource: 'github', openGitHubWorkItem: workItem },
+      githubTaskDrawerWorkItem: workItem
+    })
+
+    store.getState().openWecirDevCardPage()
+
+    expect(store.getState().activeView).toBe('cards')
+    expect(store.getState().previousViewBeforeCards).toBe('tasks')
+    expect(store.getState().taskPageData).toEqual({
+      taskSource: 'github',
+      openGitHubWorkItem: workItem
+    })
+    expect(store.getState().githubTaskDrawerWorkItem).toBe(workItem)
+
+    store.getState().closeWecirDevCardPage()
+
+    expect(store.getState().activeView).toBe('tasks')
+    expect(store.getState().taskPageData.openGitHubWorkItem).toBe(workItem)
+    expect(store.getState().githubTaskDrawerWorkItem).toBe(workItem)
+  })
+
+  it('returns from Tasks to Cards without changing the Cards return target', () => {
+    const store = createUIStore()
+
+    store.getState().openWecirDevCardPage()
+    store.getState().openTaskPage({ taskSource: 'github' })
+
+    expect(store.getState().activeView).toBe('tasks')
+    expect(store.getState().previousViewBeforeTasks).toBe('cards')
+    expect(store.getState().previousViewBeforeCards).toBe('terminal')
+
+    store.getState().closeTaskPage()
+    expect(store.getState().activeView).toBe('cards')
+
+    store.getState().closeWecirDevCardPage()
+    expect(store.getState().activeView).toBe('terminal')
+  })
+
   it('records and rewinds Tasks visits on close', () => {
     const store = createUIStore()
     store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })

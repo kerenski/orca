@@ -12,8 +12,13 @@ import {
   hasRequestedBackgroundTerminalWorktreeMount,
   subscribeBackgroundTerminalWorktreeMountRequests
 } from '../components/terminal/background-terminal-worktree-mount'
+import type { TopLevelView } from '../../../shared/ui-chrome-types'
 
 export type AppChromeLayout = ReturnType<typeof useAppChromeLayout>
+
+export function shouldShowAppSidebar(activeView: TopLevelView): boolean {
+  return activeView !== 'settings' && activeView !== 'activity' && activeView !== 'space'
+}
 
 /**
  * Derives the App shell's layout decisions — which titlebar variant mounts, whether the
@@ -73,9 +78,8 @@ export function useAppChromeLayout() {
     activeView === 'terminal' && activeWorktreeId !== null && !creationLayoutActive
   const hasTabBar = tabCount >= 2
   // Activity/Space are full-page navigation surfaces (like Settings), so the worktree sidebar is hidden there.
-  const showSidebar =
-    activeView !== 'settings' && activeView !== 'activity' && activeView !== 'space'
-  // Tasks/Landing show the full titlebar only when the sidebar is collapsed; open, they mirror workspace view (creation suppresses it).
+  const showSidebar = shouldShowAppSidebar(activeView)
+  // Tasks/Cards/Landing show the full titlebar only when the sidebar is collapsed; open, they mirror workspace view (creation suppresses it).
   const stackedSidebarOpen =
     !workspaceChromeActive && !creationLayoutActive && showSidebar && sidebarOpen
   // Visible creation keeps only the top-left window chrome; tabs and right-sidebar chrome stay gated by workspaceChromeActive.

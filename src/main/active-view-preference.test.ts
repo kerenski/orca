@@ -53,6 +53,20 @@ describe('ActiveViewPreference', () => {
     })
   })
 
+  it('persists and restores the cards view', async () => {
+    vi.useFakeTimers()
+    const preference = new ActiveViewPreference(dataFile, 'terminal')
+
+    expect(preference.set('cards')).toBe(true)
+    vi.advanceTimersByTime(100)
+    await preference.waitForPendingWrite()
+
+    expect(JSON.parse(readFileSync(getActiveViewPreferenceFile(dataFile), 'utf-8'))).toEqual({
+      activeView: 'cards'
+    })
+    expect(new ActiveViewPreference(dataFile, 'terminal').get()).toBe('cards')
+  })
+
   it('flushes synchronously for an immediate graceful exit', () => {
     vi.useFakeTimers()
     const preference = new ActiveViewPreference(dataFile, 'terminal')

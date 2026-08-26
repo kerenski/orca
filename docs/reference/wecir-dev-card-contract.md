@@ -24,6 +24,12 @@
 
 第一版只支持本地 execution host。跨进程升级遵循 additive-only 规则：新增字段必须可选，旧客户端可省略新增字段；未知非危险字段在兼容层可忽略。新增状态或 IPC channel 必须先通过能力检查；未知状态不可当作成功处理。Schema 对已知对象使用严格字段集，并拒绝 `__proto__`、`prototype`、`constructor`、`token`、`apiKey`、`password` 和 `secret` 等危险字段。
 
+## Renderer 导航边界
+
+`cards` 是独立顶层视图，通过 `openWecirDevCardPage` / `closeWecirDevCardPage` 管理返回目标，并使用独立的 `wecir-dev-card` Zustand slice。它不得调用 `openTaskPage`，也不得读写 `taskPageData` 或官方 Tasks Drawer 状态。
+
+顶层视图持久化接受 `cards`，旧版或未知值仍回退到 `terminal`。第一版卡片页只选择本地 Git 仓库；没有本地 Git 仓库、GitHub CLI 未安装或未认证时必须显示明确空状态，不把远端断联解释为本地任务不存在。
+
 ## Fixture
 
 `src/shared/wecir-dev/fixtures/` 包含成功 card、失败响应和兼容旧字段的 JSON 样例，测试覆盖其关键形状及非法输入。
