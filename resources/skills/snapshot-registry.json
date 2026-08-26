@@ -1762,6 +1762,141 @@
           }
         ]
       }
+    ],
+    "orca-skill": [
+      {
+        "releaseRevision": 1,
+        "packageDigest": "57cc38344689c467bda06c134f4dd1226b1abb055326f86db1d9df0a53334df3",
+        "gitTreeSha": "0c5ba760e626db221905c7f7c0256d740c75b6b4",
+        "files": [
+          {
+            "path": "OPTIMIZATION.md",
+            "size": 12753,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "b9526393a28e111fc3719c63c541dda854f1d8444990cec39892a51fb9d7eea1",
+            "textNormalizedSha256": "b9526393a28e111fc3719c63c541dda854f1d8444990cec39892a51fb9d7eea1",
+            "identitySha256": "b9526393a28e111fc3719c63c541dda854f1d8444990cec39892a51fb9d7eea1"
+          },
+          {
+            "path": "SKILL.md",
+            "size": 3466,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "1a7ce06a7d0f8add8a0119a98dd6e744c8cc4ad3a972afbc17f27337504eef25",
+            "textNormalizedSha256": "1a7ce06a7d0f8add8a0119a98dd6e744c8cc4ad3a972afbc17f27337504eef25",
+            "identitySha256": "1a7ce06a7d0f8add8a0119a98dd6e744c8cc4ad3a972afbc17f27337504eef25"
+          },
+          {
+            "path": "scripts/check-ci.sh",
+            "size": 7663,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "da346d6965a76c4891a71199a96ce93c694c1233de4365a6c039569281f5dd8f",
+            "textNormalizedSha256": "da346d6965a76c4891a71199a96ce93c694c1233de4365a6c039569281f5dd8f",
+            "identitySha256": "da346d6965a76c4891a71199a96ce93c694c1233de4365a6c039569281f5dd8f"
+          },
+          {
+            "path": "scripts/ensure-worker.sh",
+            "size": 4282,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "cfd469467516941f7bb6a03d7a8cf6b8f65cec5b92185dd8554a4d08e1f46f9e",
+            "textNormalizedSha256": "cfd469467516941f7bb6a03d7a8cf6b8f65cec5b92185dd8554a4d08e1f46f9e",
+            "identitySha256": "cfd469467516941f7bb6a03d7a8cf6b8f65cec5b92185dd8554a4d08e1f46f9e"
+          },
+          {
+            "path": "scripts/kimi-trust.sh",
+            "size": 1179,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "fb343b69aeed998827c4db6c01399b18f70386c50a203966cf9e3980fa08bd27",
+            "textNormalizedSha256": "fb343b69aeed998827c4db6c01399b18f70386c50a203966cf9e3980fa08bd27",
+            "identitySha256": "fb343b69aeed998827c4db6c01399b18f70386c50a203966cf9e3980fa08bd27"
+          },
+          {
+            "path": "scripts/poll-dev-local.sh",
+            "size": 7976,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "4c77acb126da43739a0e6e1b90446fcbfaee51ce73426b2520e67789b861f03e",
+            "textNormalizedSha256": "4c77acb126da43739a0e6e1b90446fcbfaee51ce73426b2520e67789b861f03e",
+            "identitySha256": "4c77acb126da43739a0e6e1b90446fcbfaee51ce73426b2520e67789b861f03e"
+          },
+          {
+            "path": "scripts/run-checks.sh",
+            "size": 4041,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "7037e72ba370ace961fdf29ad5b6f4a4eb8759910dbc0f3ec18ce706f26ba49c",
+            "textNormalizedSha256": "7037e72ba370ace961fdf29ad5b6f4a4eb8759910dbc0f3ec18ce706f26ba49c",
+            "identitySha256": "7037e72ba370ace961fdf29ad5b6f4a4eb8759910dbc0f3ec18ce706f26ba49c"
+          },
+          {
+            "path": "scripts/send-dev-task.sh",
+            "size": 6922,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "b75a4107cd54c309e4b8bca02d1a4e787a2021b03a95322bd0682d3153976151",
+            "textNormalizedSha256": "b75a4107cd54c309e4b8bca02d1a4e787a2021b03a95322bd0682d3153976151",
+            "identitySha256": "b75a4107cd54c309e4b8bca02d1a4e787a2021b03a95322bd0682d3153976151"
+          },
+          {
+            "path": "scripts/send-review-round.sh",
+            "size": 453,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "f056fc006396289727e3ad58f605a441a781b84cdecdb2e41f72de3b937b03f2",
+            "textNormalizedSha256": "f056fc006396289727e3ad58f605a441a781b84cdecdb2e41f72de3b937b03f2",
+            "identitySha256": "f056fc006396289727e3ad58f605a441a781b84cdecdb2e41f72de3b937b03f2"
+          },
+          {
+            "path": "scripts/send-review.sh",
+            "size": 6027,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "730a1916317765c0b1d66f20e02c38424b4e514a7f89ffcb194a7e97141292ea",
+            "textNormalizedSha256": "730a1916317765c0b1d66f20e02c38424b4e514a7f89ffcb194a7e97141292ea",
+            "identitySha256": "730a1916317765c0b1d66f20e02c38424b4e514a7f89ffcb194a7e97141292ea"
+          },
+          {
+            "path": "scripts/start-card.sh",
+            "size": 8262,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "ccc5c7c4ac81e3e6c7fd81292c4607e23be7e156fd359c86412578039772c960",
+            "textNormalizedSha256": "ccc5c7c4ac81e3e6c7fd81292c4607e23be7e156fd359c86412578039772c960",
+            "identitySha256": "ccc5c7c4ac81e3e6c7fd81292c4607e23be7e156fd359c86412578039772c960"
+          },
+          {
+            "path": "scripts/wait-dev-watchdog.sh",
+            "size": 6685,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "89c9f29e36f4c314188c0e2e4f10c62c02a8580456832a9259a45be5a1bb6f6b",
+            "textNormalizedSha256": "89c9f29e36f4c314188c0e2e4f10c62c02a8580456832a9259a45be5a1bb6f6b",
+            "identitySha256": "89c9f29e36f4c314188c0e2e4f10c62c02a8580456832a9259a45be5a1bb6f6b"
+          },
+          {
+            "path": "templates/controller-prompt.tpl.md",
+            "size": 13768,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "c827315074e36d0e5c1174f7dbf15b1b7d738939c3292447b4fe9c70441be0d9",
+            "textNormalizedSha256": "c827315074e36d0e5c1174f7dbf15b1b7d738939c3292447b4fe9c70441be0d9",
+            "identitySha256": "c827315074e36d0e5c1174f7dbf15b1b7d738939c3292447b4fe9c70441be0d9"
+          },
+          {
+            "path": "tiers.json",
+            "size": 1799,
+            "executable": false,
+            "classification": "text",
+            "exactSha256": "8c2a90f22140c159b6981cbe7192567e8d4e79dd5965c21804ed9f1d2edb8f49",
+            "textNormalizedSha256": "8c2a90f22140c159b6981cbe7192567e8d4e79dd5965c21804ed9f1d2edb8f49",
+            "identitySha256": "8c2a90f22140c159b6981cbe7192567e8d4e79dd5965c21804ed9f1d2edb8f49"
+          }
+        ]
+      }
     ]
   }
 }
