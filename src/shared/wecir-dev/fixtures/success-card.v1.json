@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "cardId": "card-m1-01",
+  "name": "m1-01",
+  "repository": {
+    "repositoryId": "repo-1",
+    "path": "/workspace/orca",
+    "executionHost": "local",
+    "provider": "github",
+    "owner": "kerenski",
+    "name": "orca"
+  },
+  "reference": {
+    "kind": "issue",
+    "number": 61,
+    "owner": "kerenski",
+    "repository": "orca",
+    "title": "M1-01 冻结卡片领域模型、IPC 契约和兼容性边界"
+  },
+  "priority": "high",
+  "dependencies": [],
+  "status": "completed",
+  "createdAt": "2026-08-26T00:00:00.000Z",
+  "updatedAt": "2026-08-26T01:00:00.000Z",
+  "completedAt": "2026-08-26T01:00:00.000Z"
+}
