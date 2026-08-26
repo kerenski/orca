@@ -22,7 +22,8 @@ import {
   WecirDevDependencyRelationSchema,
   WecirDevIssueReferenceSchema
 } from '../../../../shared/wecir-dev/schemas'
-import type { WecirDevCardDraft, WecirDevCardTemplate } from './wecir-dev-card-data-source'
+import type { WecirDevCardDraft } from './wecir-dev-card-data-source'
+import type { WecirDevCardTemplate } from './wecir-dev-card-templates'
 
 function repositoryIdentity(repo: Repo | undefined): { owner: string; repository: string } {
   const parts = repo?.gitRemoteIdentity?.canonicalKey.split('/') ?? []

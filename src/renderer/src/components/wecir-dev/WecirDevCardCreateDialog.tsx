@@ -6,7 +6,8 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import type { Repo } from '../../../../shared/repo-types'
-import { createWecirDevCard, type WecirDevCardTemplate } from './wecir-dev-card-data-source'
+import { createWecirDevCard } from './wecir-dev-card-data-source'
+import type { WecirDevCardTemplate } from './wecir-dev-card-templates'
 import { WecirDevCardForm } from './WecirDevCardForm'
 
 export function WecirDevCardCreateDialog({

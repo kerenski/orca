@@ -15,7 +15,7 @@ import {
   revokeWecirDevCardShare,
   shareWecirDevCard,
   type WecirDevCardShare
-} from './wecir-dev-card-data-source'
+} from './wecir-dev-card-shares'
 
 export function WecirDevCardShareDialog({
   card,

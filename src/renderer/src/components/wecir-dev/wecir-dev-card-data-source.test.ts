@@ -8,12 +8,12 @@ import {
   deleteWecirDevCard,
   issueWecirDevCardInstruction,
   listWecirDevCards,
-  saveWecirDevCardTemplate,
-  shareWecirDevCard,
   updateWecirDevCard,
   type WecirDevCardDataSnapshot,
   type WecirDevCardDraft
 } from './wecir-dev-card-data-source'
+import { shareWecirDevCard } from './wecir-dev-card-shares'
+import { saveWecirDevCardTemplate } from './wecir-dev-card-templates'
 
 function draft(name: string, repositoryId = 'repo-1'): WecirDevCardDraft {
   return {

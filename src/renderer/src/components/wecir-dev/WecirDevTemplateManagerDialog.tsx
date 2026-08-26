@@ -23,7 +23,7 @@ import {
   deleteWecirDevCardTemplate,
   saveWecirDevCardTemplate,
   type WecirDevCardTemplate
-} from './wecir-dev-card-data-source'
+} from './wecir-dev-card-templates'
 
 const NO_REPOSITORY = '__none__'
 
