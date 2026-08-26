@@ -41,6 +41,10 @@ import type {
   ListWorkItemsResult
 } from '../../shared/github/work-item-types'
 import type { GitHubCreateIssueResult, GitHubIssueUpdate } from '../../shared/issue-mutation-types'
+import type {
+  WecirDevGitHubCardData,
+  WecirDevGitHubCardDataArgs
+} from '../../shared/wecir-dev/github-card-data'
 
 export type GitHubRepoSelectorArgs = {
   repoPath: string
@@ -49,6 +53,9 @@ export type GitHubRepoSelectorArgs = {
 }
 
 export type GithubWorkItemApi = {
+  wecirDevCardData: (
+    args: GitHubRepoSelectorArgs & WecirDevGitHubCardDataArgs
+  ) => Promise<WecirDevGitHubCardData>
   issue: (args: {
     repoPath: string
     repoId?: string

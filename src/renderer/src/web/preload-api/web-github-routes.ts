@@ -6,6 +6,7 @@ export type WebGitHubRouteKey =
   | 'workItem'
   | 'workItemByOwnerRepo'
   | 'workItemDetails'
+  | 'wecirDevCardData'
   | 'prFileContents'
   | 'listIssues'
   | 'createIssue'
@@ -56,6 +57,7 @@ export type WebGitHubRuntimeMethod =
   | 'github.workItem'
   | 'github.workItemByOwnerRepo'
   | 'github.workItemDetails'
+  | 'github.wecirDevCardData'
   | 'github.prFileContents'
   | 'github.listIssues'
   | 'github.createIssue'
@@ -106,6 +108,7 @@ export const GITHUB_WEB_RPC_METHODS = {
   workItem: 'github.workItem',
   workItemByOwnerRepo: 'github.workItemByOwnerRepo',
   workItemDetails: 'github.workItemDetails',
+  wecirDevCardData: 'github.wecirDevCardData',
   prFileContents: 'github.prFileContents',
   listIssues: 'github.listIssues',
   createIssue: 'github.createIssue',

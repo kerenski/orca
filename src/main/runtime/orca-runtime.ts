@@ -796,6 +796,10 @@ import { resolveGitHubReviewHeadRemote } from '../github/review-head-remote'
 import { fetchCompareBaseRefWithLocalFallback } from '../git/compare-base-ref-fetch'
 import { pickPreferredGitRemote } from '../../shared/preferred-git-remote'
 import { getWorkItemDetails, getPRFileContents } from '../github/work-item-details'
+import {
+  getWecirDevGitHubCardData,
+  type WecirDevGitHubCardDataArgs
+} from '../github/wecir-dev-card-data'
 import { getRateLimit } from '../github/rate-limit'
 import {
   closeMR as closeGitLabMR,
@@ -22045,6 +22049,62 @@ export class OrcaRuntimeService {
       this.getLocalGitExecutionOptionArgs(repo)[0] ?? {},
       repo.issueSourcePreference
     )
+  }
+
+  async getRepoWecirDevGitHubCardData(
+    repoSelector: string,
+    args: WecirDevGitHubCardDataArgs = {}
+  ): Promise<Awaited<ReturnType<typeof getWecirDevGitHubCardData>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    const localGitOptions = this.getLocalGitExecutionOptionArgs(repo)[0] ?? {}
+    return getWecirDevGitHubCardData(args, {
+      listWorkItems: (request) =>
+        listWorkItems(
+          repo.path,
+          request.limit,
+          request.query,
+          request.page,
+          repo.issueSourcePreference,
+          repo.connectionId ?? null,
+          request.noCache,
+          localGitOptions
+        ),
+      getWorkItem: (number, type) =>
+        getWorkItem(
+          repo.path,
+          number,
+          type,
+          repo.connectionId ?? null,
+          localGitOptions,
+          repo.issueSourcePreference
+        ),
+      getWorkItemDetails: (number, type) =>
+        getWorkItemDetails(
+          repo.path,
+          number,
+          type,
+          repo.connectionId ?? null,
+          localGitOptions,
+          repo.issueSourcePreference
+        ),
+      getPRChecks: (number, headSha, prRepo) =>
+        getPRChecks(
+          repo.path,
+          number,
+          headSha,
+          prRepo ?? null,
+          { noCache: args.noCache },
+          repo.connectionId ?? null,
+          localGitOptions
+        ),
+      getPRCheckDetails: (checkArgs) =>
+        getPRCheckDetails(
+          repo.path,
+          checkArgs,
+          repo.connectionId ?? null,
+          localGitOptions
+        )
+    })
   }
 
   async countRepoWorkItems(repoSelector: string, query?: string): Promise<number> {

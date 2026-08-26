@@ -31,6 +31,13 @@ const WorkItemByOwnerRepo = RepoSelector.extend({
 
 const WorkItemDetails = WorkItem
 
+const WecirDevCardData = RepoSelector.extend({
+  limit: OptionalFiniteNumber,
+  query: OptionalString,
+  page: z.number().int().positive().optional(),
+  noCache: z.boolean().optional()
+})
+
 const WorkItemsCount = RepoSelector.extend({
   query: OptionalString
 })
@@ -113,5 +120,16 @@ export const GITHUB_REPO_WORK_ITEM_METHODS: RpcMethod[] = [
     params: WorkItemDetails,
     handler: async (params, { runtime }) =>
       runtime.getRepoWorkItemDetails(params.repo, params.number, params.type)
+  }),
+  defineMethod({
+    name: 'github.wecirDevCardData',
+    params: WecirDevCardData,
+    handler: async (params, { runtime }) =>
+      runtime.getRepoWecirDevGitHubCardData(params.repo, {
+        limit: params.limit,
+        query: params.query,
+        page: params.page,
+        noCache: params.noCache
+      })
   })
 ]

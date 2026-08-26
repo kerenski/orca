@@ -129,6 +129,32 @@ describe('github RPC methods', () => {
     expect(response).toMatchObject({ ok: true, result: { body: 'Details' } })
   })
 
+  it('fetches Wecir Dev card data on the runtime server', async () => {
+    const runtime = {
+      getRuntimeId: () => 'test-runtime',
+      getRepoWecirDevGitHubCardData: vi.fn().mockResolvedValue({ items: [], itemErrors: [] })
+    } as unknown as OrcaRuntimeService
+    const dispatcher = new RpcDispatcher({ runtime, methods: GITHUB_METHODS })
+
+    const response = await dispatcher.dispatch(
+      makeRequest('github.wecirDevCardData', {
+        repo: 'repo-1',
+        limit: 12,
+        query: 'is:open',
+        page: 2,
+        noCache: true
+      })
+    )
+
+    expect(runtime.getRepoWecirDevGitHubCardData).toHaveBeenCalledWith('repo-1', {
+      limit: 12,
+      query: 'is:open',
+      page: 2,
+      noCache: true
+    })
+    expect(response).toMatchObject({ ok: true, result: { items: [], itemErrors: [] } })
+  })
+
   it('counts work items on the runtime server', async () => {
     const runtime = {
       getRuntimeId: () => 'test-runtime',

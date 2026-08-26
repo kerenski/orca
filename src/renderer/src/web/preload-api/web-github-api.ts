@@ -50,6 +50,8 @@ export function createGitHubApi(): WebGitHubApi {
       }),
     workItemDetails: (args) =>
       route<WebGitHubResult<'workItemDetails'>>(GITHUB_WEB_RPC_METHODS.workItemDetails, args),
+    wecirDevCardData: (args) =>
+      route<WebGitHubResult<'wecirDevCardData'>>(GITHUB_WEB_RPC_METHODS.wecirDevCardData, args),
     notifyWorkItemMutated: () => Promise.resolve(false),
     prFileContents: (args) =>
       route<WebGitHubResult<'prFileContents'>>(GITHUB_WEB_RPC_METHODS.prFileContents, args),
