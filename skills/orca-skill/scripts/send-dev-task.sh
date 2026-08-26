@@ -109,16 +109,42 @@ EOF
 }
 
 start_watchdog() {
-  [ -f "$WATCHDOG" ] || { echo "  [watchdog] 脚本缺失 ${WATCHDOG}，跳过（controller 需自行轮询兜底）" >&2; return; }
+  # 看门狗脚本存在性检查：硬失败，避免静默跳过导致 controller 永久挂起
+  if [ ! -f "$WATCHDOG" ]; then
+    echo "ERROR: 看门狗脚本不存在：${WATCHDOG}" >&2
+    echo "       这意味着主 worktree 的 orca-skill 代码过旧或未同步" >&2
+    echo "       请在主 worktree 执行：git pull origin HEAD" >&2
+    echo "       然后重新开卡：bash \$HOME/.orca-skill/scripts/start-card.sh --issue ${ISSUE} --card ${CARD} --tier <tier> --force" >&2
+    exit 1
+  fi
+
+  # controller.handle 存在性检查：看门狗依赖它发送通知
+  if [ ! -f "${STATE_DIR}/controller.handle" ]; then
+    echo "ERROR: controller.handle 不存在：${STATE_DIR}/controller.handle" >&2
+    echo "       这是 start-card.sh 的 bug（应在 send 前写入），请报告开发者" >&2
+    exit 1
+  fi
+
   mkdir -p "$STATE_DIR"
   # 换轮：杀掉旧看门狗（其 baseline/round 已过时；TERM 延迟时旧进程靠 pid 自查退出）
   if [ -f "${STATE_DIR}/watchdog.pid" ]; then
     kill "$(cat "${STATE_DIR}/watchdog.pid" 2>/dev/null)" 2>/dev/null || true
     rm -f "${STATE_DIR}/watchdog.pid"
   fi
+
   nohup bash "$WATCHDOG" --card "$CARD" --issue "$ISSUE" --round 0 --worker "$HANDLE" --baseline "$BASELINE_AHEAD" \
     >>"${STATE_DIR}/watchdog.log" 2>&1 &
-  echo "  [watchdog] 已启动 baseline=${BASELINE_AHEAD}（兜底代发 DEV_SIGNAL；controller 落盘 card-state 后即可结束回合）"
+  local watchdog_pid=$!
+
+  # 等待看门狗真正启动（写入 pid 文件并存活）
+  sleep 1
+  if kill -0 "$watchdog_pid" 2>/dev/null; then
+    echo "  [watchdog] 已启动 PID=${watchdog_pid} baseline=${BASELINE_AHEAD}（兜底代发 DEV_SIGNAL；controller 落盘 card-state 后即可结束回合）"
+  else
+    echo "ERROR: 看门狗启动失败，PID=${watchdog_pid} 已退出" >&2
+    echo "       查看日志：cat ${STATE_DIR}/watchdog.log" >&2
+    exit 1
+  fi
 }
 
 if orca terminal send --terminal "$HANDLE" --text "$MSG" --enter --json >/dev/null 2>&1; then
