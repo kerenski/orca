@@ -26,6 +26,7 @@ vi.mock('@/lib/local-preflight-context', () => ({
 }))
 
 import WecirDevCardPage from './WecirDevCardPage'
+import { createWecirDevCard } from './wecir-dev-card-data-source'
 
 function localRepo(): Repo {
   return {
@@ -34,7 +35,12 @@ function localRepo(): Repo {
     displayName: 'repo-1',
     badgeColor: 'gray',
     addedAt: 1,
-    kind: 'git'
+    kind: 'git',
+    gitRemoteIdentity: {
+      canonicalKey: 'github.com/kerenski/orca',
+      remoteName: 'origin',
+      remoteUrl: 'https://github.com/kerenski/orca.git'
+    }
   }
 }
 
@@ -76,6 +82,7 @@ async function renderPage(): Promise<HTMLDivElement> {
 describe('WecirDevCardPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     setPageState()
   })
 
@@ -111,5 +118,44 @@ describe('WecirDevCardPage', () => {
     expect(emptyState?.getAttribute('data-state')).toBe('github-auth-required')
     expect(emptyState?.textContent).toContain('GitHub authentication required')
     expect(mocks.setWecirDevCardRepositoryId).toHaveBeenCalledWith('repo-1')
+  })
+
+  it('loads and renders persisted cards in the ready state', async () => {
+    createWecirDevCard({
+      name: 'issue-62-review-fixes',
+      repository: {
+        repositoryId: 'repo-1',
+        path: '/tmp/repo-1',
+        executionHost: 'local',
+        provider: 'github',
+        owner: 'kerenski',
+        name: 'orca'
+      },
+      reference: {
+        kind: 'issue',
+        number: 62,
+        owner: 'kerenski',
+        repository: 'orca'
+      },
+      priority: 'critical',
+      dependencies: []
+    })
+    setPageState({
+      repos: [localRepo()],
+      preflightStatus: {
+        git: { installed: true },
+        gh: { installed: true, authenticated: true }
+      },
+      preflightStatusChecked: true,
+      preflightStatusContextKey: 'local'
+    })
+
+    const container = await renderPage()
+
+    expect(container.querySelector('[data-testid="wecir-dev-card-list"]')).not.toBeNull()
+    expect(container.textContent).toContain('issue-62-review-fixes')
+    expect(container.textContent).toContain('Critical')
+    expect(container.textContent).toContain('Issue #62')
+    expect(container.textContent).not.toContain('Agent skill share')
   })
 })

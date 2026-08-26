@@ -19,7 +19,9 @@ import {
   type WecirDevStatusTransition
 } from './contracts'
 
-const CardName = z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/, 'Invalid card name')
+export const WecirDevCardNameSchema = z
+  .string()
+  .regex(/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/, 'Invalid card name')
 const Id = z.string().min(1).max(128)
 const IsoDate = z.iso.datetime({ offset: true })
 const SchemaVersion = z.literal(WECIR_DEV_SCHEMA_VERSION)
@@ -88,7 +90,7 @@ export const WecirDevCardRecordSchema: z.ZodType<WecirDevCardRecord> = z
   .object({
     schemaVersion: SchemaVersion,
     cardId: Id,
-    name: CardName,
+    name: WecirDevCardNameSchema,
     repository: WecirDevRepositorySelectionSchema,
     reference: WecirDevIssueReferenceSchema,
     priority: WecirDevPrioritySchema,

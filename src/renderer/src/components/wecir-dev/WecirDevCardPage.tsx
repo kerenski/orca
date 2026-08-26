@@ -1,9 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import {
   CircleAlert,
   FolderGit2,
   Github,
   LayoutGrid,
+  LayoutTemplate,
   LoaderCircle,
   Plus,
   RefreshCw,
@@ -11,12 +13,35 @@ import {
   X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { getLocalPreflightContext, localPreflightContextKey } from '@/lib/local-preflight-context'
 import { useAppStore } from '@/store'
 import { getRepoExecutionHostId, LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import { isGitRepoKind } from '../../../../shared/repo-kind'
+import type {
+  WecirDevCardRecord,
+  WecirDevControllerInstruction
+} from '../../../../shared/wecir-dev/contracts'
+import { WecirDevCardCreateDialog } from './WecirDevCardCreateDialog'
+import { WecirDevCardEditPage } from './WecirDevCardEditPage'
+import { WecirDevCardList, type WecirDevStatusFilter } from './WecirDevCardList'
+import { WecirDevCardShareDialog } from './WecirDevCardShareDialog'
+import { WecirDevTemplateManagerDialog } from './WecirDevTemplateManagerDialog'
+import {
+  deleteWecirDevCard,
+  issueWecirDevCardInstruction,
+  listWecirDevCards,
+  useWecirDevCardData,
+  type WecirDevCardTemplate
+} from './wecir-dev-card-data-source'
 
 export type WecirDevCardPageState =
   | 'no-repositories'
@@ -207,6 +232,14 @@ export default function WecirDevCardPage(): React.JSX.Element {
   const preflightStatusLoading = useAppStore((state) => state.preflightStatusLoading)
   const preflightStatusError = useAppStore((state) => state.preflightStatusError)
   const refreshPreflightStatus = useAppStore((state) => state.refreshPreflightStatus)
+  const cardData = useWecirDevCardData()
+  const [statusFilter, setStatusFilter] = useState<WecirDevStatusFilter>('all')
+  const [page, setPage] = useState(1)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createTemplate, setCreateTemplate] = useState<WecirDevCardTemplate | null>(null)
+  const [editingCard, setEditingCard] = useState<WecirDevCardRecord | null>(null)
+  const [sharingCard, setSharingCard] = useState<WecirDevCardRecord | null>(null)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
   const expectedPreflightContextKey = useAppStore((state) =>
     localPreflightContextKey(getLocalPreflightContext(state))
   )
@@ -227,6 +260,13 @@ export default function WecirDevCardPage(): React.JSX.Element {
     preflightError: preflightStatusError,
     githubInstalled: preflightStatus?.gh.installed === true,
     githubAuthenticated: preflightStatus?.gh.authenticated === true
+  })
+  const cardPage = listWecirDevCards({
+    snapshot: cardData,
+    repositoryId: selectedRepository?.id,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    page,
+    pageSize: 8
   })
 
   useEffect(() => {
@@ -272,9 +312,30 @@ export default function WecirDevCardPage(): React.JSX.Element {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [closeWecirDevCardPage])
 
+  useEffect(() => {
+    const lastPage = Math.max(1, Math.ceil(cardPage.total / cardPage.pageSize))
+    if (page > lastPage) {
+      setPage(lastPage)
+    }
+  }, [cardPage.pageSize, cardPage.total, page])
+
   const openIntegrations = (): void => {
     openSettingsTarget({ pane: 'integrations', repoId: selectedRepository?.id ?? null })
     openSettingsPage()
+  }
+
+  const runInstruction = (
+    card: WecirDevCardRecord,
+    command: WecirDevControllerInstruction['command']
+  ): void => {
+    try {
+      issueWecirDevCardInstruction(card.cardId, command)
+      toast.success(
+        command === 'refresh' ? 'Card status refreshed' : `Card command recorded: ${command}`
+      )
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Card command failed')
+    }
   }
 
   return (
@@ -304,13 +365,110 @@ export default function WecirDevCardPage(): React.JSX.Element {
         <h1 className="truncate text-sm font-semibold">
           {translate('auto.components.wecirDev.WecirDevCardPage.title', 'Cards')}
         </h1>
+        {pageState === 'ready' ? (
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" size="xs" onClick={() => setTemplatesOpen(true)}>
+              <LayoutTemplate />
+              Templates
+            </Button>
+            <Button
+              size="xs"
+              onClick={() => {
+                setCreateTemplate(null)
+                setCreateOpen(true)
+              }}
+            >
+              <Plus />
+              New card
+            </Button>
+          </div>
+        ) : null}
       </header>
-      <WecirDevCardEmptyState
-        state={pageState}
-        onAddRepository={() => openModal('add-repo')}
-        onOpenIntegrations={openIntegrations}
-        onRetry={() => void refreshPreflightStatus({ force: true })}
-      />
+      {pageState === 'ready' ? (
+        <>
+          <div className="flex shrink-0 items-center gap-3 px-5 pb-3 md:px-8">
+            <span className="text-xs text-muted-foreground">Repository</span>
+            <Select
+              value={selectedRepository?.id}
+              onValueChange={(repositoryId) => {
+                setSelectedRepositoryId(repositoryId)
+                setPage(1)
+              }}
+            >
+              <SelectTrigger size="sm" className="w-56">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {localRepositories.map((repository) => (
+                  <SelectItem key={repository.id} value={repository.id}>
+                    {repository.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <WecirDevCardList
+            page={cardPage}
+            statusFilter={statusFilter}
+            onStatusFilterChange={(status) => {
+              setStatusFilter(status)
+              setPage(1)
+            }}
+            onPageChange={setPage}
+            onCreate={() => {
+              setCreateTemplate(null)
+              setCreateOpen(true)
+            }}
+            onEdit={setEditingCard}
+            onShare={setSharingCard}
+            onInstruction={runInstruction}
+            onDelete={(card) => {
+              deleteWecirDevCard(card.cardId)
+              toast.success('Card deleted')
+            }}
+          />
+          <WecirDevCardCreateDialog
+            open={createOpen}
+            repositories={localRepositories}
+            template={createTemplate}
+            onOpenChange={setCreateOpen}
+            onCreated={() => {
+              setStatusFilter('all')
+              setPage(1)
+              toast.success('Development card created')
+            }}
+          />
+          <WecirDevCardEditPage
+            card={editingCard}
+            repositories={localRepositories}
+            onClose={() => setEditingCard(null)}
+          />
+          <WecirDevTemplateManagerDialog
+            open={templatesOpen}
+            repositories={localRepositories}
+            templates={cardData.templates}
+            onOpenChange={setTemplatesOpen}
+            onUseTemplate={(template) => {
+              setCreateTemplate(template)
+              setTemplatesOpen(false)
+              setCreateOpen(true)
+            }}
+          />
+          <WecirDevCardShareDialog
+            key={sharingCard?.cardId ?? 'closed'}
+            card={sharingCard}
+            shares={cardData.shares}
+            onClose={() => setSharingCard(null)}
+          />
+        </>
+      ) : (
+        <WecirDevCardEmptyState
+          state={pageState}
+          onAddRepository={() => openModal('add-repo')}
+          onOpenIntegrations={openIntegrations}
+          onRetry={() => void refreshPreflightStatus({ force: true })}
+        />
+      )}
     </main>
   )
 }

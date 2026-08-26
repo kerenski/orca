@@ -6013,6 +6013,9 @@
           "projectOnly": "Added in this project only.",
           "useGlobalFor": "Use global for {{value0}}",
           "useGlobal": "Use global"
+        },
+        "SidebarWecirDevNavButton": {
+          "cards": "Cards"
         }
       },
       "shared": {
@@ -15930,6 +15933,28 @@
         "expiredCompact": "Expired",
         "typeMarkdown": "Markdown",
         "typeHtml": "HTML"
+      },
+      "wecirDev": {
+        "WecirDevCardPage": {
+          "noRepositoriesTitle": "No local Git repositories",
+          "noRepositoriesDescription": "Add a local Git repository before creating development cards.",
+          "addRepository": "Add repository",
+          "checkingGitHubTitle": "Checking GitHub access",
+          "checkingGitHubDescription": "Orca is checking the GitHub CLI on this execution host.",
+          "githubCheckFailedTitle": "GitHub access could not be checked",
+          "githubCheckFailedDescription": "Retry the integration check before loading development cards.",
+          "retry": "Retry",
+          "githubCliMissingTitle": "GitHub CLI is not installed",
+          "githubCliMissingDescription": "Install and authenticate the GitHub CLI before loading development cards.",
+          "openIntegrations": "Open Integrations",
+          "githubAuthRequiredTitle": "GitHub authentication required",
+          "githubAuthRequiredDescription": "Authenticate the GitHub CLI before loading development cards.",
+          "readyTitle": "No development cards yet",
+          "readyDescription": "Development cards for the selected repository will appear here.",
+          "closeCards": "Close cards",
+          "closeHint": "Close · Esc",
+          "title": "Cards"
+        }
       }
     },
     "i18n": {
