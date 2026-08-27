@@ -33,19 +33,46 @@ describe('dispatchWorkItem', () => {
       type: 'bogus' as unknown as 'issue' | 'pr'
     }
     await dispatchWorkItem(bogus, repo, fn)
-    expect(fn).toHaveBeenCalledWith('/r', 42, undefined, null, undefined, undefined)
+    expect(fn).toHaveBeenCalledWith(
+      '/r',
+      42,
+      undefined,
+      null,
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    )
   })
 
   it('passes valid issue type through', async () => {
     const fn = vi.fn().mockResolvedValue(null)
     await dispatchWorkItem({ repoPath: '/r', number: 42, type: 'issue' }, repo, fn)
-    expect(fn).toHaveBeenCalledWith('/r', 42, 'issue', null, undefined, undefined)
+    expect(fn).toHaveBeenCalledWith(
+      '/r',
+      42,
+      'issue',
+      null,
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    )
   })
 
   it('passes valid pr type through', async () => {
     const fn = vi.fn().mockResolvedValue(null)
     await dispatchWorkItem({ repoPath: '/r', number: 42, type: 'pr' }, repo, fn)
-    expect(fn).toHaveBeenCalledWith('/r', 42, 'pr', null, undefined, undefined)
+    expect(fn).toHaveBeenCalledWith(
+      '/r',
+      42,
+      'pr',
+      null,
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    )
   })
 
   it('passes SSH connection context through', async () => {
@@ -55,7 +82,16 @@ describe('dispatchWorkItem', () => {
       { path: '/remote/repo', connectionId: 'ssh-1' },
       fn
     )
-    expect(fn).toHaveBeenCalledWith('/remote/repo', 42, 'issue', 'ssh-1', undefined, undefined)
+    expect(fn).toHaveBeenCalledWith(
+      '/remote/repo',
+      42,
+      'issue',
+      'ssh-1',
+      undefined,
+      undefined,
+      undefined,
+      undefined
+    )
   })
 
   it('pins the repo issue source preference for open-by-number', async () => {
@@ -66,7 +102,33 @@ describe('dispatchWorkItem', () => {
       fn,
       { wslDistro: 'Ubuntu' }
     )
-    expect(fn).toHaveBeenCalledWith('/r', 42, 'pr', null, { wslDistro: 'Ubuntu' }, 'origin')
+    expect(fn).toHaveBeenCalledWith(
+      '/r',
+      42,
+      'pr',
+      null,
+      { wslDistro: 'Ubuntu' },
+      'origin',
+      undefined,
+      undefined
+    )
+  })
+
+  it('forwards issue and pull request repository identities', async () => {
+    const fn = vi.fn().mockResolvedValue(null)
+    const issueRepo = { owner: 'acme', repo: 'issues', host: 'github.acme.test' }
+    const prRepo = { owner: 'acme', repo: 'pulls' }
+    await dispatchWorkItem({ repoPath: '/r', number: 42, issueRepo, prRepo }, repo, fn)
+    expect(fn).toHaveBeenCalledWith(
+      '/r',
+      42,
+      undefined,
+      null,
+      undefined,
+      undefined,
+      issueRepo,
+      prRepo
+    )
   })
 
   it('leaves upstream and auto preferences on the multi-candidate probe', async () => {
@@ -81,7 +143,27 @@ describe('dispatchWorkItem', () => {
       { path: '/r', connectionId: null, issueSourcePreference: 'auto' },
       fn
     )
-    expect(fn).toHaveBeenNthCalledWith(1, '/r', 7, 'pr', null, undefined, 'upstream')
-    expect(fn).toHaveBeenNthCalledWith(2, '/r', 7, 'pr', null, undefined, 'auto')
+    expect(fn).toHaveBeenNthCalledWith(
+      1,
+      '/r',
+      7,
+      'pr',
+      null,
+      undefined,
+      'upstream',
+      undefined,
+      undefined
+    )
+    expect(fn).toHaveBeenNthCalledWith(
+      2,
+      '/r',
+      7,
+      'pr',
+      null,
+      undefined,
+      'auto',
+      undefined,
+      undefined
+    )
   })
 })

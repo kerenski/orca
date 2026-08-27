@@ -64,7 +64,8 @@ const {
   registerLocalhostWorktreeLabelHandlersMock,
   registerNativeChatHandlersMock,
   registerEmulatorFrameStreamHandlersMock,
-  registerEmulatorVideoStreamHandlersMock
+  registerEmulatorVideoStreamHandlersMock,
+  registerWecirDevHandlersMock
 } = vi.hoisted(() => ({
   getPathMock: vi.fn(() => '/test/user-data'),
   listEnvironmentsMock: vi.fn(() => []),
@@ -129,7 +130,8 @@ const {
   registerLocalhostWorktreeLabelHandlersMock: vi.fn(),
   registerNativeChatHandlersMock: vi.fn(),
   registerEmulatorFrameStreamHandlersMock: vi.fn(),
-  registerEmulatorVideoStreamHandlersMock: vi.fn()
+  registerEmulatorVideoStreamHandlersMock: vi.fn(),
+  registerWecirDevHandlersMock: vi.fn()
 }))
 
 vi.mock('electron', () => ({
@@ -184,6 +186,10 @@ vi.mock('./usage-provider-handlers', () => ({
 
 vi.mock('./github', () => ({
   registerGitHubHandlers: registerGitHubHandlersMock
+}))
+
+vi.mock('./wecir-dev', () => ({
+  registerWecirDevHandlers: registerWecirDevHandlersMock
 }))
 
 vi.mock('./feedback', () => ({
@@ -394,6 +400,7 @@ describe('registerCoreHandlers', () => {
     registerPreflightHandlersMock.mockReset()
     registerUsageProviderHandlersMock.mockReset()
     registerGitHubHandlersMock.mockReset()
+    registerWecirDevHandlersMock.mockReset()
     registerFeedbackHandlersMock.mockReset()
     registerStatsHandlersMock.mockReset()
     registerMemoryHandlersMock.mockReset()
@@ -512,6 +519,7 @@ describe('registerCoreHandlers', () => {
     expect(registerGrokAccountHandlersMock).toHaveBeenCalled()
     expect(registerRateLimitHandlersMock).toHaveBeenCalledWith(rateLimits, codexAccounts)
     expect(registerGitHubHandlersMock).toHaveBeenCalledWith(store, stats)
+    expect(registerWecirDevHandlersMock).toHaveBeenCalledWith(store, undefined, null)
     expect(registerLinearHandlersMock).toHaveBeenCalled()
     expect(registerJiraHandlersMock).toHaveBeenCalled()
     expect(registerBitbucketHandlersMock).toHaveBeenCalled()
