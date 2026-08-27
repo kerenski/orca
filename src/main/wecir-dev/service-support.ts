@@ -50,13 +50,16 @@ export const CONTROLLER_COMMANDS: Record<string, string> = {
   mark_stale: '汇总阻塞'
 }
 
+const MAX_CARD_NAME_LENGTH = 64
+
 export function cardNameForIssue(issueNumber: number, title: string): string {
+  const prefix = `issue-${issueNumber}-`
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 55)
-  return `issue-${issueNumber}-${slug || 'card'}`
+    .slice(0, Math.max(0, MAX_CARD_NAME_LENGTH - prefix.length))
+  return `${prefix}${slug || 'card'}`.slice(0, MAX_CARD_NAME_LENGTH)
 }
 
 export function createCardRecord(
@@ -190,6 +193,17 @@ export function githubAnalysisError(
     error.message,
     details,
     authenticationFailure ? 'github_auth_failed' : 'unknown'
+  )
+}
+
+export function existingCardNames(
+  cards: Iterable<WecirDevCardRecord>,
+  repositoryId: string
+): Set<string> {
+  return new Set(
+    [...cards]
+      .filter((card) => card.repository.repositoryId === repositoryId)
+      .map((card) => card.name)
   )
 }
 

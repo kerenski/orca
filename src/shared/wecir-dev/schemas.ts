@@ -40,6 +40,7 @@ export const WecirDevRepositorySelectionSchema: z.ZodType<WecirDevRepositorySele
     path: z.string().min(1).max(4096),
     executionHost: z.literal('local'),
     provider: z.literal('github').optional(),
+    issueSourcePreference: z.enum(['origin', 'upstream', 'auto']).optional(),
     owner: z.string().min(1).max(100).optional(),
     name: z.string().min(1).max(100).optional(),
     defaultBranch: z.string().min(1).max(255).optional()

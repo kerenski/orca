@@ -89,9 +89,18 @@ async function handle(
   }
   try {
     const response = success(requestId, await operation(parsed.data as unknown as ParsedRequest))
-    if (schemas.response.safeParse(response).success) {
+    const responseValidation = schemas.response.safeParse(response)
+    if (responseValidation.success) {
       return response
     }
+    console.error('[wecir-dev] response schema validation failed', {
+      requestId,
+      issues: responseValidation.error.issues.map(({ path, code, message }) => ({
+        path,
+        code,
+        message
+      }))
+    })
     return validatedFailure(schemas, requestId, {
       code: 'invalid_script_output',
       message: 'Wecir Dev service returned an invalid response',

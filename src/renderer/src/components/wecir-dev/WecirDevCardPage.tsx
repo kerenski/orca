@@ -22,6 +22,7 @@ function repositorySelection(repo: {
     path: repo.path,
     executionHost: 'local',
     provider: 'github',
+    issueSourcePreference: 'origin',
     name: repo.displayName
   }
 }

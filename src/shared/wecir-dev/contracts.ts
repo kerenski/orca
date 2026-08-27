@@ -44,6 +44,7 @@ export type WecirDevRepositorySelection = {
   path: string
   executionHost: 'local'
   provider?: 'github'
+  issueSourcePreference?: 'origin' | 'upstream' | 'auto'
   owner?: string
   name?: string
   defaultBranch?: string

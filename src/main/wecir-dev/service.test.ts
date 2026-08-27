@@ -14,6 +14,7 @@ vi.mock('./github-data-adapter', () => ({ listGitHubData, getGitHubDataBatch }))
 
 import { WecirDevService } from './service'
 import type { CardRunner } from './types'
+import { WecirDevOperationSchemas } from '../../shared/wecir-dev/operations'
 
 const repository = {
   repositoryId: 'repo-1',
@@ -169,6 +170,9 @@ describe('WecirDevService', () => {
 
     const result = await service.analyzeCards({ repository })
 
+    expect(listGitHubData).toHaveBeenCalledWith(
+      expect.objectContaining({ issueSourcePreference: 'origin' })
+    )
     expect(getGitHubDataBatch).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({
@@ -380,5 +384,42 @@ describe('WecirDevService', () => {
     expect(issue.analysis?.scoreDetails).toContainEqual(
       expect.objectContaining({ rule: 'multiple-impact', points: 20 })
     )
+  })
+
+  it('keeps analyzed cards within the response name schema limit', async () => {
+    assertRegisteredGitHubRepo.mockReturnValue(registeredRepo)
+    listGitHubData.mockResolvedValue({
+      items: [
+        {
+          number: 66,
+          type: 'issue',
+          title: 'A '.repeat(100),
+          labels: [],
+          references: [],
+          updatedAt: '2026-08-26T00:00:00.000Z'
+        }
+      ],
+      sources: {
+        issues: { owner: 'acme', repo: 'app' },
+        prs: null,
+        originCandidate: null,
+        upstreamCandidate: null
+      }
+    })
+    getGitHubDataBatch.mockResolvedValue({ items: [], errors: [] })
+    const service = new WecirDevService(store, {
+      now: () => '2026-08-26T00:00:00.000Z'
+    })
+
+    const result = await service.analyzeCards({ repository })
+    const response = {
+      schemaVersion: 1 as const,
+      requestId: 'request-1',
+      ok: true as const,
+      data: result
+    }
+
+    expect(result.cards[0].name.length).toBeLessThanOrEqual(64)
+    expect(WecirDevOperationSchemas.analyzeCards.response.safeParse(response).success).toBe(true)
   })
 })

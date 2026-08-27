@@ -59,16 +59,23 @@ export function getGitHubSourceForItem(
   return sourceForItem(sources, type)
 }
 
+const MAX_CARD_NAME_LENGTH = 64
+
 export function uniqueCardName(baseName: string, usedNames: Set<string>): string {
-  if (!usedNames.has(baseName)) {
-    usedNames.add(baseName)
-    return baseName
+  const boundedBaseName = baseName.slice(0, MAX_CARD_NAME_LENGTH)
+  if (!usedNames.has(boundedBaseName)) {
+    usedNames.add(boundedBaseName)
+    return boundedBaseName
   }
   let revision = 2
-  while (usedNames.has(`${baseName}-r${revision}`)) {
+  while (
+    usedNames.has(
+      `${boundedBaseName.slice(0, MAX_CARD_NAME_LENGTH - String(revision).length - 3)}-r${revision}`
+    )
+  ) {
     revision += 1
   }
-  const name = `${baseName}-r${revision}`
+  const name = `${boundedBaseName.slice(0, MAX_CARD_NAME_LENGTH - String(revision).length - 3)}-r${revision}`
   usedNames.add(name)
   return name
 }

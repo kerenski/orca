@@ -37,6 +37,7 @@ import {
   summarizeChecks,
   analysisError,
   githubAnalysisError,
+  existingCardNames,
   runCardBatch
 } from './service-support'
 
@@ -67,6 +68,7 @@ export class WecirDevService {
       repoId: repo.id,
       limit: 200,
       query: args.query,
+      issueSourcePreference: args.repository.issueSourcePreference ?? 'origin',
       connectionId: getGitHubRepoConnectionId(repo)
     })
     const analysisErrors: WecirDevError[] = Object.entries(result.errors ?? {}).map(
@@ -140,11 +142,7 @@ export class WecirDevService {
       ])
     )
     const analyzedAt = this.now()
-    const usedNames = new Set(
-      [...this.cards.values()]
-        .filter((card) => card.repository.repositoryId === args.repository.repositoryId)
-        .map((card) => card.name)
-    )
+    const usedNames = existingCardNames(this.cards.values(), args.repository.repositoryId)
     const cards = await buildAnalysisCards({
       items: analyzedItems,
       repository: args.repository,
