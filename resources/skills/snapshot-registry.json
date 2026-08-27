@@ -1766,8 +1766,8 @@
     "orca-skill": [
       {
         "releaseRevision": 1,
-        "packageDigest": "e9cb6c99e732bde13bc4421da4b575513bb4e50e02f34edcc08c8fd71fcd42db",
-        "gitTreeSha": "f335b95f790e75d5c292cba65f807a4d21a37934",
+        "packageDigest": "2c1e672cf8d1ac05aeeaddae88019f0c1bd8aedb2a0ff32a68c13fd0d6870682",
+        "gitTreeSha": "d5e0a9b00de2e272d9c4e20dd58196c1c8de4755",
         "files": [
           {
             "path": "OPTIMIZATION.md",
@@ -1789,12 +1789,12 @@
           },
           {
             "path": "scripts/check-ci.sh",
-            "size": 7663,
+            "size": 7684,
             "executable": false,
             "classification": "text",
-            "exactSha256": "3a470d3f4dcc711795fb5d0eb9357d69e926b1e58b203285af5593e4add5b51f",
-            "textNormalizedSha256": "3a470d3f4dcc711795fb5d0eb9357d69e926b1e58b203285af5593e4add5b51f",
-            "identitySha256": "3a470d3f4dcc711795fb5d0eb9357d69e926b1e58b203285af5593e4add5b51f"
+            "exactSha256": "740ec22d8e3d2c21ac7bf4c54f433deb8b5ddde9156ebe9006e6798141521d7b",
+            "textNormalizedSha256": "740ec22d8e3d2c21ac7bf4c54f433deb8b5ddde9156ebe9006e6798141521d7b",
+            "identitySha256": "740ec22d8e3d2c21ac7bf4c54f433deb8b5ddde9156ebe9006e6798141521d7b"
           },
           {
             "path": "scripts/ensure-worker.sh",
@@ -1888,12 +1888,12 @@
           },
           {
             "path": "tiers.json",
-            "size": 1799,
+            "size": 1777,
             "executable": false,
             "classification": "text",
-            "exactSha256": "8c2a90f22140c159b6981cbe7192567e8d4e79dd5965c21804ed9f1d2edb8f49",
-            "textNormalizedSha256": "8c2a90f22140c159b6981cbe7192567e8d4e79dd5965c21804ed9f1d2edb8f49",
-            "identitySha256": "8c2a90f22140c159b6981cbe7192567e8d4e79dd5965c21804ed9f1d2edb8f49"
+            "exactSha256": "2bbb74ca8473a9504e0b78f02a5f343b138d02230e0a1719a6d80a5848b2813d",
+            "textNormalizedSha256": "2bbb74ca8473a9504e0b78f02a5f343b138d02230e0a1719a6d80a5848b2813d",
+            "identitySha256": "2bbb74ca8473a9504e0b78f02a5f343b138d02230e0a1719a6d80a5848b2813d"
           }
         ]
       }

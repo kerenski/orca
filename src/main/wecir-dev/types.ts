@@ -14,7 +14,17 @@ export type {
   WecirDevStartCardsBatchResult
 } from '../../shared/wecir-dev/operations'
 
-import type { WecirDevStartCardSuccess } from '../../shared/wecir-dev/contracts'
+import type {
+  WecirDevAnalysisResult,
+  WecirDevStartCardSuccess
+} from '../../shared/wecir-dev/contracts'
+import type { WecirDevPriorityConfig } from '../../shared/wecir-dev/card-priority-analysis'
+
+export type WecirDevModelAssist = (input: {
+  number: number
+  title: string
+  ruleAnalysis: WecirDevAnalysisResult
+}) => Promise<Pick<WecirDevAnalysisResult, 'explanation' | 'confidence'> | undefined>
 
 export type CardRunnerResult = WecirDevStartCardSuccess
 
@@ -30,4 +40,6 @@ export type CardRunner = (args: {
 export type WecirDevServiceDependencies = {
   runCard?: CardRunner
   now?: () => string
+  modelAssist?: WecirDevModelAssist
+  priorityConfig?: WecirDevPriorityConfig
 }

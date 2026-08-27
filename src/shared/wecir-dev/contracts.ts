@@ -83,6 +83,12 @@ export type WecirDevDependencyAnalysis = {
   executableOrder: number[]
 }
 
+export type WecirDevAnalysisScoreDetail = {
+  rule: string
+  points: number
+  explanation: string
+}
+
 export type WecirDevAnalysisResult = {
   summary: string
   suggestedPriority: WecirDevPriority
@@ -90,6 +96,13 @@ export type WecirDevAnalysisResult = {
   riskFlags: string[]
   acceptanceCriteria: string[]
   generatedAt: string
+  score?: number
+  scoreDetails?: WecirDevAnalysisScoreDetail[]
+  priorityBand?: 'P0' | 'P1' | 'P2' | 'P3'
+  suggestedTier?: 'simple' | 'medium' | 'complex'
+  explanation?: string
+  confidence?: number
+  cycleWarning?: string
 }
 
 export type WecirDevError = {

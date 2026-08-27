@@ -270,7 +270,7 @@ export function analyzeWecirDevDependencies(
     relationSources: sources.get(number) ?? [],
     topoLevel: levels.get(number) ?? 0,
     blockedCount: blockedCounts.get(number) ?? 0,
-    cycleDetected: cycles.size > 0,
+    cycleDetected: cycles.has(number),
     cycleNodes: [...cycles].sort((a, b) => a - b),
     executableOrder: order
   }))

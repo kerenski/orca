@@ -172,15 +172,182 @@ describe('WecirDevService', () => {
         })
       ])
     )
-    expect(result.cards[0]).toMatchObject({
+    const analyzedIssue = result.cards.find((card) => card.reference.number === 1)!
+    expect(analyzedIssue).toMatchObject({
+      priority: 'normal',
       name: 'issue-1-same-title-r2',
       dependencies: [{ relation: 'blocked_by', targetCardId: 'repo-1:2' }],
       analysis: {
-        suggestedPriority: 'high',
+        suggestedPriority: 'normal',
         dependencies: [{ relation: 'blocked_by', targetCardId: 'repo-1:2' }],
         generatedAt: '2026-08-26T00:00:00.000Z'
       }
     })
-    expect(result.cards[1].analysis?.riskFlags).toContain('github_detail_unavailable')
+    expect(result.cards.find((card) => card.reference.number === 2)?.analysis?.riskFlags).toContain(
+      'github_detail_unavailable'
+    )
+  })
+
+  it('keeps rule priority and main order when model assistance disagrees', async () => {
+    assertRegisteredGitHubRepo.mockReturnValue(registeredRepo)
+    listGitHubData.mockResolvedValue({
+      items: [
+        {
+          number: 2,
+          type: 'issue',
+          title: 'Low priority',
+          labels: ['priority: low'],
+          references: [{ kind: 'issue', number: 9, owner: 'acme', repository: 'app' }],
+          updatedAt: '2026-08-26T00:00:00.000Z'
+        },
+        {
+          number: 1,
+          type: 'issue',
+          title: 'High priority',
+          labels: ['type: bug', 'priority: high'],
+          references: [],
+          updatedAt: '2026-08-26T00:00:00.000Z'
+        }
+      ],
+      sources: {
+        issues: { owner: 'acme', repo: 'app' },
+        prs: null,
+        originCandidate: null,
+        upstreamCandidate: null
+      }
+    })
+    getGitHubDataBatch.mockResolvedValue({ items: [], errors: [] })
+    const modelAssist = vi.fn(async ({ number }) => ({
+      explanation: `Model explanation for #${number}`,
+      confidence: number === 1 ? 0.1 : 0.99
+    }))
+    const service = new WecirDevService(store, {
+      modelAssist,
+      now: () => '2026-08-26T00:00:00.000Z'
+    })
+
+    const result = await service.analyzeCards({ repository })
+    const high = result.cards.find((card) => card.reference.number === 1)!
+    const low = result.cards.find((card) => card.reference.number === 2)!
+
+    expect(result.cards.map((card) => card.reference.number)).toEqual([1, 2])
+    expect(high).toMatchObject({ priority: 'high' })
+    expect(high.analysis).toMatchObject({
+      score: 100,
+      priorityBand: 'P0',
+      suggestedTier: 'complex',
+      explanation: 'Model explanation for #1',
+      confidence: 0.1
+    })
+    expect(low).toMatchObject({ priority: 'normal' })
+    expect(low.analysis).toMatchObject({
+      score: 10,
+      priorityBand: 'P3',
+      suggestedTier: 'simple',
+      explanation: 'Model explanation for #2',
+      confidence: 0.99
+    })
+    expect(modelAssist).toHaveBeenCalledTimes(2)
+  })
+
+  it('returns pure rule analysis when model assistance fails', async () => {
+    assertRegisteredGitHubRepo.mockReturnValue(registeredRepo)
+    listGitHubData.mockResolvedValue({
+      items: [
+        {
+          number: 3,
+          type: 'issue',
+          title: 'Security issue',
+          labels: ['severity: critical', 'type: security'],
+          references: [],
+          updatedAt: '2026-08-26T00:00:00.000Z'
+        }
+      ],
+      sources: {
+        issues: { owner: 'acme', repo: 'app' },
+        prs: null,
+        originCandidate: null,
+        upstreamCandidate: null
+      }
+    })
+    getGitHubDataBatch.mockResolvedValue({ items: [], errors: [] })
+    const service = new WecirDevService(store, {
+      modelAssist: vi.fn(async () => {
+        throw new Error('model unavailable')
+      }),
+      now: () => '2026-08-26T00:00:00.000Z'
+    })
+
+    const result = await service.analyzeCards({ repository })
+
+    expect(result.cards[0].analysis).toMatchObject({
+      score: 130,
+      priorityBand: 'P0',
+      suggestedPriority: 'critical',
+      suggestedTier: 'complex',
+      confidence: 0.9
+    })
+    expect(result.cards[0].analysis?.explanation).toContain('critical severity')
+    expect(result.cards[0].analysis?.explanation).not.toContain('Model')
+  })
+
+  it('uses detail references for dependency analysis and impact scoring', async () => {
+    assertRegisteredGitHubRepo.mockReturnValue(registeredRepo)
+    listGitHubData.mockResolvedValue({
+      items: [1, 2, 3].map((number) => ({
+        number,
+        type: 'issue' as const,
+        title: `Issue ${number}`,
+        labels: [],
+        references: [],
+        updatedAt: '2026-08-26T00:00:00.000Z'
+      })),
+      sources: {
+        issues: { owner: 'acme', repo: 'app' },
+        prs: null,
+        originCandidate: null,
+        upstreamCandidate: null
+      }
+    })
+    getGitHubDataBatch.mockResolvedValue({
+      items: [1, 2, 3].map((number) => ({
+        item: {
+          number,
+          type: 'issue' as const,
+          title: `Issue ${number}`,
+          labels: []
+        },
+        body: '',
+        comments: { count: 0 },
+        references:
+          number === 1
+            ? [
+                { kind: 'issue' as const, number: 2, owner: 'acme', repository: 'app' },
+                { kind: 'issue' as const, number: 3, owner: 'acme', repository: 'app' }
+              ]
+            : [],
+        timelineItems: [],
+        checks: []
+      })),
+      errors: []
+    })
+    const service = new WecirDevService(store, {
+      now: () => '2026-08-26T00:00:00.000Z'
+    })
+
+    const result = await service.analyzeCards({
+      repository,
+      priorityConfig: { staleAfterDays: 0, stalePointsPerDay: 0, staleMaxPoints: 0 }
+    })
+    const issue = result.cards.find((card) => card.reference.number === 1)!
+
+    expect(issue.dependencies).toEqual([
+      { relation: 'blocked_by', targetCardId: 'repo-1:2' },
+      { relation: 'blocked_by', targetCardId: 'repo-1:3' }
+    ])
+    expect(issue.analysis).toMatchObject({ score: 0, priorityBand: 'P3' })
+    expect(issue.analysis?.scoreDetails).toContainEqual(
+      expect.objectContaining({ rule: 'multiple-impact', points: 20 })
+    )
   })
 })

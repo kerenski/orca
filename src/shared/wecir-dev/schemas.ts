@@ -23,6 +23,7 @@ import {
   type WecirDevStartCardSuccess,
   type WecirDevStatusTransition
 } from './contracts'
+import { WecirDevPriorityConfigSchema } from './card-priority-analysis'
 
 export const WecirDevCardNameSchema = z
   .string()
@@ -102,7 +103,25 @@ export const WecirDevAnalysisResultSchema: z.ZodType<WecirDevAnalysisResult> = z
     dependencies: z.array(WecirDevDependencyRelationSchema).max(128),
     riskFlags: z.array(z.string().min(1).max(200)).max(128),
     acceptanceCriteria: z.array(z.string().min(1).max(2000)).max(128),
-    generatedAt: IsoDate
+    generatedAt: IsoDate,
+    score: z.number().finite().optional(),
+    scoreDetails: z
+      .array(
+        z
+          .object({
+            rule: z.string().min(1).max(100),
+            points: z.number().finite(),
+            explanation: z.string().min(1).max(1000)
+          })
+          .strict()
+      )
+      .max(128)
+      .optional(),
+    priorityBand: z.enum(['P0', 'P1', 'P2', 'P3']).optional(),
+    suggestedTier: z.enum(['simple', 'medium', 'complex']).optional(),
+    explanation: z.string().max(10_000).optional(),
+    confidence: z.number().min(0).max(1).optional(),
+    cycleWarning: z.string().max(1000).optional()
   })
   .strict()
 
@@ -265,7 +284,8 @@ export const WecirDevAnalyzeCardsPayloadSchema = z
   .object({
     repository: WecirDevRepositorySelectionSchema,
     issueNumbers: z.array(z.number().int().positive()).max(200).optional(),
-    query: z.string().max(500).optional()
+    query: z.string().max(500).optional(),
+    priorityConfig: WecirDevPriorityConfigSchema.optional()
   })
   .strict()
 export const WecirDevStartCardPayloadSchema = z
