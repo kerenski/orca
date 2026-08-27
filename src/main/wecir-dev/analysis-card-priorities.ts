@@ -1,6 +1,7 @@
 import type {
   WecirDevAnalysisResult,
   WecirDevCardRecord,
+  WecirDevDependencyAnalysis,
   WecirDevRepositorySelection
 } from '../../shared/wecir-dev/contracts'
 import {
@@ -8,7 +9,6 @@ import {
   sortWecirDevAnalyses,
   type WecirDevPriorityConfig
 } from '../../shared/wecir-dev/card-priority-analysis'
-import type { WecirDevDependencyAnalysis } from '../../shared/wecir-dev/contracts'
 import type { WecirDevGitHubItem } from '../../shared/wecir-dev/github-data-contracts'
 import type { WecirDevModelAssist } from './types'
 import { uniqueCardName } from './analysis-support'
