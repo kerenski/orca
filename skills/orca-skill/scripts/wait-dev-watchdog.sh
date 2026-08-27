@@ -2,7 +2,7 @@
 # wait-dev-watchdog.sh —— worker 等待看门狗（事件驱动等待的慢路径兜底，零 LLM 成本）
 # 由 send-dev-task.sh / send-review.sh 在发送成功后自动 nohup 启动，controller 无需手动调用。
 #
-# 职责（每 CHECK_INTERVAL=300s 一轮）：
+# 职责（每 CHECK_INTERVAL=180s 一轮）：
 #   1. ahead > baseline（worker 已提交）→ 代发 DEV_SIGNAL（防 worker 忘发）→ 校验 controller 已醒 → 退出
 #   2. worker handle 消失 → 向 controller 发 WORKER_DEAD → 退出
 #   3. 日志锚点已写但未提交 → nudge 催提交（窗口期最多 2 次、间隔 ≥15 分钟）
@@ -42,7 +42,7 @@ done
 [[ "$CARD" =~ ^[a-z0-9-]+$ ]] && [[ "$ISSUE" =~ ^[0-9]+$ ]] && [ -n "$WORKER" ] || {
   echo "ERROR: --card/--issue/--worker 必填" >&2; exit 1; }
 
-CHECK_INTERVAL=300    # 每 5 分钟检查
+CHECK_INTERVAL=180    # 每 3 分钟检查
 NUDGE_MAX=2           # 窗口期最多催 2 次
 NUDGE_GAP=900         # 催提交间隔 ≥15 分钟
 AWAKE_CHECK_DELAY=300 # 代发 5 分钟后校验 controller 是否真醒

@@ -13,7 +13,12 @@ import {
   fetchPullRequestWorkItem,
   fetchPullRequestWorkItemFromCandidates
 } from './work-item-fetch'
-export async function getWorkItem(
+export type WorkItemReadOutcome = {
+  item: MainWorkItem | null
+  error?: ReturnType<typeof classifyGhError>
+}
+
+async function readWorkItem(
   repoPath: string,
   number: number,
   type?: 'issue' | 'pr',
@@ -82,14 +87,29 @@ export async function getWorkItem(
       localGitOptions,
       preference
     )
-  } catch {
-    return null
   } finally {
     release()
   }
 }
 
-export async function getWorkItemByOwnerRepo(
+export async function getWorkItemOutcome(
+  ...args: Parameters<typeof readWorkItem>
+): Promise<WorkItemReadOutcome> {
+  try {
+    return { item: await readWorkItem(...args) }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { item: null, error: classifyGhError(message) }
+  }
+}
+
+export async function getWorkItem(
+  ...args: Parameters<typeof readWorkItem>
+): Promise<MainWorkItem | null> {
+  return (await getWorkItemOutcome(...args)).item
+}
+
+async function readWorkItemByOwnerRepo(
   repoPath: string,
   ownerRepo: GitHubApiRepository,
   number: number,
@@ -136,9 +156,24 @@ export async function getWorkItemByOwnerRepo(
       connectionId,
       localGitOptions
     )
-  } catch {
-    return null
   } finally {
     release()
   }
+}
+
+export async function getWorkItemByOwnerRepoOutcome(
+  ...args: Parameters<typeof readWorkItemByOwnerRepo>
+): Promise<WorkItemReadOutcome> {
+  try {
+    return { item: await readWorkItemByOwnerRepo(...args) }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { item: null, error: classifyGhError(message) }
+  }
+}
+
+export async function getWorkItemByOwnerRepo(
+  ...args: Parameters<typeof readWorkItemByOwnerRepo>
+): Promise<MainWorkItem | null> {
+  return (await getWorkItemByOwnerRepoOutcome(...args)).item
 }

@@ -1,6 +1,10 @@
 import type { PRCheckDetail } from '../../shared/github/check-types'
 import type { GitHubPRFile, GitHubPRFileContents } from '../../shared/github/pull-request-types'
-import type { GitHubWorkItem, GitHubWorkItemDetails } from '../../shared/github/work-item-types'
+import type {
+  GitHubRepositoryIdentity,
+  GitHubWorkItem,
+  GitHubWorkItemDetails
+} from '../../shared/github/work-item-types'
 import type { IssueSourcePreference } from '../../shared/repo-types'
 import { getPRChecks, getPRComments, getWorkItem } from './client'
 import { acquire, release, type LocalGitExecOptions } from './gh-utils'
@@ -69,7 +73,9 @@ export async function getWorkItemDetails(
   type?: 'issue' | 'pr',
   connectionId?: string | null,
   localGitOptions: LocalGitExecOptions = {},
-  preference?: IssueSourcePreference
+  preference?: IssueSourcePreference,
+  issueRepo?: GitHubRepositoryIdentity,
+  prRepo?: GitHubRepositoryIdentity
 ): Promise<GitHubWorkItemDetails | null> {
   const item: Omit<GitHubWorkItem, 'repoId'> | null = await getWorkItem(
     repoPath,
@@ -85,9 +91,10 @@ export async function getWorkItemDetails(
 
   const resolvedRepository =
     item.type === 'issue'
-      ? await getIssueGitHubApiRepository(repoPath, connectionId, localGitOptions)
-      : (await resolveGitHubRepoExecution(repoPath, item.prRepo, connectionId, localGitOptions))
-          .ownerRepo
+      ? (issueRepo ?? (await getIssueGitHubApiRepository(repoPath, connectionId, localGitOptions)))
+      : (prRepo ??
+        (await resolveGitHubRepoExecution(repoPath, item.prRepo, connectionId, localGitOptions))
+          .ownerRepo)
 
   if (item.type === 'issue') {
     return withWorkItemDetailsPermit(async () => {

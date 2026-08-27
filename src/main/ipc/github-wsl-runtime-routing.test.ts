@@ -413,6 +413,8 @@ describe('registerGitHubHandlers', () => {
       'pr',
       null,
       localGitOptions,
+      undefined,
+      undefined,
       undefined
     )
     expect(getWorkItemByOwnerRepoMock).toHaveBeenCalledWith(
@@ -429,6 +431,8 @@ describe('registerGitHubHandlers', () => {
       'pr',
       null,
       localGitOptions,
+      undefined,
+      undefined,
       undefined
     )
     expect(getPRFileContentsMock).toHaveBeenCalledWith(

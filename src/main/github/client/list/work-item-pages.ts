@@ -21,6 +21,18 @@ import {
   assertSshRepoHasResolvedGitHubSource,
   type PartialWorkItemsResult
 } from './work-item-list-request'
+
+type IssueSearchPayload = {
+  items?: Record<string, unknown>[]
+  total_count?: number
+  incomplete_results?: boolean
+}
+
+function parseIssueSearchPayload(stdout: string): IssueSearchPayload {
+  const parsed = JSON.parse(stdout) as Record<string, unknown>[] | IssueSearchPayload
+  return Array.isArray(parsed) ? { items: parsed } : parsed
+}
+
 export async function listRecentWorkItems(
   repoPath: string,
   issueOwnerRepo: OwnerRepo | null,
@@ -74,12 +86,18 @@ export async function listRecentWorkItems(
 
   let issues: MainWorkItem[] = []
   let issuesError: ClassifiedError | undefined
+  let issuesHasNext = false
   if (issuesSettled.status === 'fulfilled') {
     try {
-      issues = (JSON.parse(issuesSettled.value.stdout) as Record<string, unknown>[])
+      const payload = parseIssueSearchPayload(issuesSettled.value.stdout)
+      issues = (payload.items ?? [])
         // Why: search/issues can still return PRs (pull_request marker) even with is:issue; filter them out.
         .filter((item) => !('pull_request' in item))
-        .map(mapIssueWorkItem)
+        .map((item) => mapIssueWorkItem(item, issueOwnerRepo))
+      issuesHasNext =
+        typeof payload.total_count === 'number'
+          ? page * limit < payload.total_count || payload.incomplete_results === true
+          : false
     } catch (err) {
       // Why: a malformed issue payload must not discard the successfully fetched PR half.
       issuesError = classifyListIssuesError(err instanceof Error ? err.message : String(err))
@@ -93,9 +111,14 @@ export async function listRecentWorkItems(
   }
 
   let prs: MainWorkItem[] = []
+  let prsError: ClassifiedError | undefined
+  let prsHasNext = false
   if (prsSettled.status === 'fulfilled') {
-    prs = (JSON.parse(prsSettled.value.stdout) as Record<string, unknown>[])
-      .slice(prRequest?.offset ?? 0, (prRequest?.offset ?? 0) + limit)
+    const rawPrs = JSON.parse(prsSettled.value.stdout) as Record<string, unknown>[]
+    const offset = prRequest?.offset ?? 0
+    prsHasNext = rawPrs.length > offset + limit || (rawPrs.length === limit && offset === 0)
+    prs = rawPrs
+      .slice(offset, offset + limit)
       .map((item) => mapPullRequestWorkItem(item, prOwnerRepo))
     prs = await hydrateWorkItemRepositoryMergeMetadata(
       prs,
@@ -104,21 +127,18 @@ export async function listRecentWorkItems(
       githubPRStackExecutionScope(connectionId, localGitOptions)
     )
   } else {
-    // Why: re-throw PR errors so the cross-repo aggregator counts the repo failed; this feature only fixes issue-side swallowing (#1076).
-    // Why: log issuesError first so a both-sides-failed case isn't blind to the classification we're about to drop.
-    if (issuesError) {
-      console.warn(
-        'listRecentWorkItems: both issue and PR sides failed; issuesError was classified:',
-        issuesError.type,
-        issuesError.message
-      )
-    }
-    throw prsSettled.reason
+    const stderr =
+      prsSettled.reason instanceof Error ? prsSettled.reason.message : String(prsSettled.reason)
+    // Keep the successful issue side when PR listing fails.
+    prsError = classifyListPrsError(stderr)
   }
 
   return {
     items: sortWorkItemsByNumber([...issues, ...prs]).slice(0, limit),
-    issuesError
+    issuesError,
+    prsError,
+    issuesHasNext,
+    prsHasNext
   }
 }
 
@@ -145,6 +165,7 @@ export async function listQueriedWorkItems(
   let nonAvailabilityFailureCount = 0
   let availabilityError: unknown
   let prsError: ClassifiedError | undefined
+  let prsHasNext = false
 
   // Why: surface the issue-side error separately for the IPC envelope; PR-side keeps prior swallow-and-log (parent doc §6).
   const issueFetch = (async (): Promise<PartialWorkItemsResult> => {
@@ -166,11 +187,19 @@ export async function listQueriedWorkItems(
         ...ghOptions,
         ...githubHostExecOptions(issueOwnerRepo)
       })
-      const items = (JSON.parse(stdout) as Record<string, unknown>[])
+      const payload = parseIssueSearchPayload(stdout)
+      const items = (payload.items ?? [])
         .filter((item) => !('pull_request' in item))
-        .map(mapIssueWorkItem)
+        .map((item) => mapIssueWorkItem(item, issueOwnerRepo))
+      const requestedPage = page ?? 1
       successfulRequestCount += 1
-      return { items }
+      return {
+        items,
+        issuesHasNext:
+          typeof payload.total_count === 'number'
+            ? requestedPage * limit < payload.total_count || payload.incomplete_results === true
+            : false
+      }
     } catch (err) {
       const stderr = err instanceof Error ? err.message : String(err)
       if (classifyGitHubUnavailable(stderr)) {
@@ -182,12 +211,12 @@ export async function listQueriedWorkItems(
     }
   })()
 
-  const prFetch = (async (): Promise<MainWorkItem[]> => {
+  const prFetch = (async (): Promise<PartialWorkItemsResult> => {
     if (!prScope) {
-      return []
+      return { items: [] }
     }
     if (!prOwnerRepo) {
-      return []
+      return { items: [] }
     }
     const request = buildWorkItemListRequest({
       kind: 'pr',
@@ -201,7 +230,12 @@ export async function listQueriedWorkItems(
         ...ghOptions,
         ...githubHostExecOptions(prOwnerRepo)
       })
-      const mapped = (JSON.parse(stdout) as Record<string, unknown>[])
+      const rawPrs = JSON.parse(stdout) as Record<string, unknown>[]
+      const requestedPage = page ?? 1
+      prsHasNext =
+        rawPrs.length > request.offset + limit ||
+        (rawPrs.length === Math.min(requestedPage * limit, 1000) && rawPrs.length < 1000)
+      const mapped = rawPrs
         .slice(request.offset, request.offset + limit)
         .map((item) => mapPullRequestWorkItem(item, prOwnerRepo))
       const hydrated = await hydrateWorkItemRepositoryMergeMetadata(
@@ -212,9 +246,9 @@ export async function listQueriedWorkItems(
       )
       successfulRequestCount += 1
       if (query.state === 'closed') {
-        return hydrated.filter((item) => item.state !== 'merged')
+        return { items: hydrated.filter((item) => item.state !== 'merged'), prsHasNext }
       }
-      return hydrated
+      return { items: hydrated, prsHasNext }
     } catch (err) {
       console.warn('listQueriedWorkItems PRs partial failure:', err)
       const stderr = err instanceof Error ? err.message : String(err)
@@ -224,18 +258,20 @@ export async function listQueriedWorkItems(
       } else {
         nonAvailabilityFailureCount += 1
       }
-      return []
+      return { items: [], prsHasNext: false }
     }
   })()
 
-  const [issueResult, prItems] = await Promise.all([issueFetch, prFetch])
+  const [issueResult, prResult] = await Promise.all([issueFetch, prFetch])
   if (availabilityError && successfulRequestCount === 0 && nonAvailabilityFailureCount === 0) {
     // Why: when every half hit the same availability failure, propagate it so Tasks can distinguish an outage from no data.
     throw availabilityError
   }
   return {
-    items: sortWorkItemsByNumber([...issueResult.items, ...prItems]).slice(0, limit),
+    items: sortWorkItemsByNumber([...issueResult.items, ...prResult.items]).slice(0, limit),
     issuesError: issueResult.issuesError,
-    prsError
+    prsError,
+    issuesHasNext: issueResult.issuesHasNext,
+    prsHasNext: prResult.prsHasNext
   }
 }

@@ -10,6 +10,7 @@ import type { CommitMessageAgentEnvironmentResolvers } from '../../text-generati
 import { registerFilesystemWatcherHandlers } from '../filesystem-watcher'
 import { registerUsageProviderHandlers } from '../usage-provider-handlers'
 import { registerGitHubHandlers } from '../github'
+import { registerWecirDevHandlers } from '../wecir-dev'
 import { registerGitLabHandlers } from '../gitlab'
 import { registerHostedReviewHandlers } from '../hosted-review'
 import { registerLinearHandlers } from '../linear'
@@ -150,6 +151,7 @@ export function registerCoreHandlers(
   registerGrokAccountHandlers()
   registerRateLimitHandlers(rateLimits, codexAccounts)
   registerGitHubHandlers(store, stats)
+  registerWecirDevHandlers(store, undefined, mainWindowWebContentsId)
   registerGitLabHandlers(store)
   registerHostedReviewHandlers(store, stats)
   registerLinearHandlers()

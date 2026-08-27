@@ -1,3 +1,5 @@
+import type { ProviderCheckSummary } from '../github/pull-request-types'
+
 export const WECIR_DEV_SCHEMA_VERSION = 1 as const
 
 export type WecirDevSchemaVersion = typeof WECIR_DEV_SCHEMA_VERSION
@@ -42,6 +44,7 @@ export type WecirDevRepositorySelection = {
   path: string
   executionHost: 'local'
   provider?: 'github'
+  issueSourcePreference?: 'origin' | 'upstream' | 'auto'
   owner?: string
   name?: string
   defaultBranch?: string
@@ -63,6 +66,32 @@ export type WecirDevDependencyRelation = {
   note?: string
 }
 
+export type WecirDevRelationSource = {
+  kind: 'cross_reference' | 'explicit_text' | 'label'
+  relation: 'blocks' | 'blocked_by'
+  targetNumber: number
+  text?: string
+}
+
+export type WecirDevDependencyAnalysis = {
+  schemaVersion: WecirDevSchemaVersion
+  issueNumber: number
+  dependsOn: number[]
+  blocks: number[]
+  relationSources: WecirDevRelationSource[]
+  topoLevel: number
+  blockedCount: number
+  cycleDetected: boolean
+  cycleNodes: number[]
+  executableOrder: number[]
+}
+
+export type WecirDevAnalysisScoreDetail = {
+  rule: string
+  points: number
+  explanation: string
+}
+
 export type WecirDevAnalysisResult = {
   summary: string
   suggestedPriority: WecirDevPriority
@@ -70,6 +99,16 @@ export type WecirDevAnalysisResult = {
   riskFlags: string[]
   acceptanceCriteria: string[]
   generatedAt: string
+  score?: number
+  scoreDetails?: WecirDevAnalysisScoreDetail[]
+  priorityBand?: 'P0' | 'P1' | 'P2' | 'P3'
+  suggestedTier?: 'simple' | 'medium' | 'complex'
+  explanation?: string
+  confidence?: number
+  cycleWarning?: string
+  topoLevel?: number
+  blockedCount?: number
+  cycleDetected?: boolean
 }
 
 export type WecirDevError = {
@@ -79,6 +118,27 @@ export type WecirDevError = {
   details?: Record<string, string | number | boolean>
 }
 
+export type WecirDevStartCardSuccess = {
+  schemaVersion: WecirDevSchemaVersion
+  ok: true
+  controllerPtyId: string
+  worktreeId: string
+  worktreePath: string
+  branch: string
+  workerAgent: string
+  issue: number
+  card: string
+  tier: 'simple' | 'medium' | 'complex'
+}
+
+export type WecirDevStartCardFailure = {
+  schemaVersion: WecirDevSchemaVersion
+  ok: false
+  error: WecirDevError
+}
+
+export type WecirDevStartCardScriptResult = WecirDevStartCardSuccess | WecirDevStartCardFailure
+
 export type WecirDevCardRecord = {
   schemaVersion: WecirDevSchemaVersion
   cardId: string
@@ -86,6 +146,11 @@ export type WecirDevCardRecord = {
   repository: WecirDevRepositorySelection
   reference: WecirDevIssueReference
   priority: WecirDevPriority
+  labels?: string[]
+  assignees?: string[]
+  body?: string
+  url?: string
+  checksSummary?: ProviderCheckSummary
   analysis?: WecirDevAnalysisResult
   dependencies: WecirDevDependencyRelation[]
   status: WecirDevStatus

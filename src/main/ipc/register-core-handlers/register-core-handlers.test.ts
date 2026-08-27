@@ -8,6 +8,7 @@ const {
   registerPreflightHandlersMock,
   registerUsageProviderHandlersMock,
   registerGitHubHandlersMock,
+  registerWecirDevHandlersMock,
   registerFeedbackHandlersMock,
   registerStatsHandlersMock,
   registerMemoryHandlersMock,
@@ -74,6 +75,7 @@ const {
   registerPreflightHandlersMock: vi.fn(),
   registerUsageProviderHandlersMock: vi.fn(),
   registerGitHubHandlersMock: vi.fn(),
+  registerWecirDevHandlersMock: vi.fn(),
   registerFeedbackHandlersMock: vi.fn(),
   registerStatsHandlersMock: vi.fn(),
   registerMemoryHandlersMock: vi.fn(),
@@ -186,6 +188,10 @@ vi.mock('../usage-provider-handlers', () => ({
 
 vi.mock('../github', () => ({
   registerGitHubHandlers: registerGitHubHandlersMock
+}))
+
+vi.mock('../wecir-dev', () => ({
+  registerWecirDevHandlers: registerWecirDevHandlersMock
 }))
 
 vi.mock('../feedback', () => ({
@@ -400,6 +406,7 @@ describe('registerCoreHandlers', () => {
     registerPreflightHandlersMock.mockReset()
     registerUsageProviderHandlersMock.mockReset()
     registerGitHubHandlersMock.mockReset()
+    registerWecirDevHandlersMock.mockReset()
     registerFeedbackHandlersMock.mockReset()
     registerStatsHandlersMock.mockReset()
     registerMemoryHandlersMock.mockReset()
@@ -519,6 +526,7 @@ describe('registerCoreHandlers', () => {
     expect(registerGrokAccountHandlersMock).toHaveBeenCalled()
     expect(registerRateLimitHandlersMock).toHaveBeenCalledWith(rateLimits, codexAccounts)
     expect(registerGitHubHandlersMock).toHaveBeenCalledWith(store, stats)
+    expect(registerWecirDevHandlersMock).toHaveBeenCalledWith(store, undefined, null)
     expect(registerLinearHandlersMock).toHaveBeenCalled()
     expect(registerJiraHandlersMock).toHaveBeenCalled()
     expect(registerBitbucketHandlersMock).toHaveBeenCalled()
@@ -661,6 +669,7 @@ describe('registerCoreHandlers', () => {
     // IPC handlers should NOT be registered again
     expect(registerCliHandlersMock).not.toHaveBeenCalled()
     expect(registerPreflightHandlersMock).not.toHaveBeenCalled()
+    expect(registerWecirDevHandlersMock).not.toHaveBeenCalled()
     expect(registerBrowserHandlersMock).not.toHaveBeenCalled()
     // Why: ipcMain.handle throws on duplicate channel registration, so the
     // memory handler must not be wired up a second time on reactivation.

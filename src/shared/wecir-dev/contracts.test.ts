@@ -12,7 +12,8 @@ import {
   WecirDevIssueReferenceSchema,
   WecirDevStatusTransitionSchema,
   WecirDevResponseSchema,
-  WecirDevErrorSchema
+  WecirDevErrorSchema,
+  WecirDevAnalyzeCardsPayloadSchema
 } from './schemas'
 
 const baseCard = {
@@ -95,5 +96,25 @@ describe('Wecir Dev schemas', () => {
     ).toBe(false)
     expect(isKnownWecirDevStatus('controller_ready')).toBe(true)
     expect(isKnownWecirDevStatus('succeeded')).toBe(false)
+  })
+
+  it('accepts optional priority configuration with safe boundaries', () => {
+    const payload = {
+      repository: baseCard.repository,
+      priorityConfig: { staleAfterDays: 0, stalePointsPerDay: 2, staleMaxPoints: 20 }
+    }
+    expect(WecirDevAnalyzeCardsPayloadSchema.safeParse(payload).success).toBe(true)
+    expect(
+      WecirDevAnalyzeCardsPayloadSchema.safeParse({
+        ...payload,
+        priorityConfig: { stalePointsPerDay: -1 }
+      }).success
+    ).toBe(false)
+    expect(
+      WecirDevAnalyzeCardsPayloadSchema.safeParse({
+        ...payload,
+        priorityConfig: { staleMaxPoints: Number.NaN }
+      }).success
+    ).toBe(false)
   })
 })

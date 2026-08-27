@@ -1,5 +1,14 @@
 import React from 'react'
-import { Bell, BookOpen, CalendarClock, EyeOff, Files, Search, Smartphone } from 'lucide-react'
+import {
+  Bell,
+  BookOpen,
+  CalendarClock,
+  EyeOff,
+  Files,
+  Layers3,
+  Search,
+  Smartphone
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
@@ -67,6 +76,7 @@ const SidebarNav = React.memo(function SidebarNav() {
   const openMobilePage = useAppStore((s) => s.openMobilePage)
   const openArtifactsPage = useAppStore((s) => s.openArtifactsPage)
   const openSkillsPage = useAppStore((s) => s.openSkillsPage)
+  const openWecirDevCardPage = useAppStore((s) => s.openWecirDevCardPage)
   const openModal = useAppStore((s) => s.openModal)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const activeView = useAppStore((s) => s.activeView)
@@ -85,6 +95,7 @@ const SidebarNav = React.memo(function SidebarNav() {
   const activityActive = activeView === 'activity'
   const mobileActive = activeView === 'mobile'
   const artifactsActive = activeView === 'artifacts'
+  const cardsActive = activeView === 'cards'
   const skillsActive = activeView === 'skills'
   const activityUnreadCount = useActivityUnreadCount(showAgentsButton, 'sidebar-badge')
   const mobileOnboardingBadge = useMobileSidebarOnboardingBadge(showMobileButton)
@@ -137,6 +148,25 @@ const SidebarNav = React.memo(function SidebarNav() {
       </button>
       <SetupGuideSidebarEntry />
       <SidebarTaskNavButton />
+      <button
+        type="button"
+        onClick={openWecirDevCardPage}
+        aria-current={cardsActive ? 'page' : undefined}
+        className={cn(
+          'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+          cardsActive
+            ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
+            : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+        )}
+      >
+        <Layers3
+          className={cn('size-4 shrink-0', !cardsActive && 'text-worktree-sidebar-foreground/30')}
+          strokeWidth={cardsActive ? 2.25 : 1.75}
+        />
+        <span className="flex-1">
+          {translate('auto.components.sidebar.SidebarNav.wecirDevCards', 'Wecir Dev Cards')}
+        </span>
+      </button>
       {showArtifactsButton ? (
         <ContextMenu>
           <ContextMenuTrigger asChild>

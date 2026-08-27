@@ -39,9 +39,11 @@ export function getWorkItemDetailsCacheKey(args: {
   sourceCacheScope?: string | null
   type: 'issue' | 'pr'
   number: number
+  ownerRepo?: string
 }): string {
   // Why: key on every axis that changes which (repo, item) the IPC resolves to; `\0` separator avoids ambiguity with fields containing `:` or `/`.
   // Why: repoPath is the second part so match-based invalidation can find entries from a cross-window event that carries only the path.
+  // Why: ownerRepo distinguishes same-number items from different remotes (origin vs upstream Issue #123).
   const keyParts = args.sourceCacheScope
     ? [
         args.repoId,
@@ -51,6 +53,9 @@ export function getWorkItemDetailsCacheKey(args: {
         args.type
       ]
     : [args.repoId, args.repoPath, args.issueSourcePreference ?? 'auto', args.type]
+  if (args.ownerRepo) {
+    keyParts.push(args.ownerRepo)
+  }
   return [...keyParts, args.number].join('\0')
 }
 

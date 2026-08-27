@@ -12,10 +12,10 @@
     "Grok — grok -m <ID>(默认:youpai-grok-4.6)",
     " - 模型:youpai-grok-4.6、grok-4.6、grok-4.5",
     "",
-    "OpenCode — opencode run -m <provider>/<model>",
-    " - 模型:opencode/claude-sonnet-5、opencode/claude-opus-5、opencode/gpt-5.1-codex-max、opencode/deepseek-v4-pro、opencode/glm-5.2、opencode/gemini-3.1-pro …",
+    "OpenCode — opencode --auto -m <provider>/<model>",
+    " - 模型:youpai/gpt-5.6-sol、opencode/glm-5.2、opencode/gemini-3.1-pro …",
     "",
-    "MiMo Code — mimo run -m <provider>/<model>",
+    "MiMo Code — mimo --yolo -m <provider>/<model>",
     " - 模型:mimo/mimo-auto、xiaomi/mimo-v2.5、xiaomi/mimo-v2.5-pro、xiaomi/mimo-v2.5-pro-ultraspeed",
     "",
     "Pi — pi --provider <名> --model <pattern>(默认:zai-coding-cn/glm-5.3)",
@@ -25,8 +25,17 @@
     " - 模型:youpai-dp/deepseek-v4-flash、youpai-dp/deepseek-v4-pro"
   ],
   "tiers": {
-    "simple":  { "controller": "opencode -m opencode/hy3-free",            "worker": "omp" },
-    "medium":  { "controller": "opencode -m opencode/mimo-v2.5-free", "worker": "kimi" },
-    "complex": { "controller": "omp --model youpai-dp/deepseek-v4-pro",       "worker": "codex" }
+    "simple": {
+      "controller": "mimo --yolo -m xiaomi/mimo-v2.5",
+      "worker": "kimi"
+    },
+    "medium": {
+      "controller": "opencode --auto -m youpai/gpt-5.6-sol",
+      "worker": "kimi"
+    },
+    "complex": {
+      "controller": "claude '--dangerously-skip-permissions' --model claude-sonnet-5",
+      "worker": "kimi"
+    }
   }
 }

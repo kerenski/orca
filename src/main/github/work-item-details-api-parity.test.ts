@@ -4,6 +4,7 @@ import type { GitHubWorkItemDetails } from '../../shared/github/work-item-types'
 import type { IssueSourcePreference } from '../../shared/repo-types'
 import type { LocalGitExecOptions } from './gh-utils'
 import type { GitHubApiRepository } from './github-api-repository'
+import type { GitHubRepositoryIdentity } from '../../shared/github/work-item-types'
 import * as workItemDetails from './work-item-details'
 
 type GetWorkItemDetails = (
@@ -12,7 +13,9 @@ type GetWorkItemDetails = (
   type?: 'issue' | 'pr',
   connectionId?: string | null,
   localGitOptions?: LocalGitExecOptions,
-  preference?: IssueSourcePreference
+  preference?: IssueSourcePreference,
+  issueRepo?: GitHubRepositoryIdentity,
+  prRepo?: GitHubRepositoryIdentity
 ) => Promise<GitHubWorkItemDetails | null>
 
 type GetPRFileContents = (args: {

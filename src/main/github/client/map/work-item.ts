@@ -11,7 +11,10 @@ import {
   deriveWorkItemCheckSummary,
   type MainWorkItem
 } from './work-item-field-coercion'
-export function mapIssueWorkItem(item: Record<string, unknown>): MainWorkItem {
+export function mapIssueWorkItem(
+  item: Record<string, unknown>,
+  issueOwnerRepo: OwnerRepo | null = null
+): MainWorkItem {
   return {
     id: `issue:${String(item.number)}`,
     type: 'issue',
@@ -28,9 +31,23 @@ export function mapIssueWorkItem(item: Record<string, unknown>): MainWorkItem {
           )
           .filter(Boolean)
       : [],
+    ...(typeof item.milestone === 'object' && item.milestone !== null
+      ? { milestone: String((item.milestone as { title?: unknown }).title ?? '') }
+      : typeof item.milestone === 'string' || item.milestone === null
+        ? { milestone: item.milestone }
+        : {}),
     updatedAt: String(item.updated_at ?? item.updatedAt ?? ''),
     ...authorFieldsFromUnknown(item),
-    ...(item.assignees !== undefined ? { assignees: usersFromUnknown(item.assignees) } : {})
+    ...(item.assignees !== undefined ? { assignees: usersFromUnknown(item.assignees) } : {}),
+    ...(issueOwnerRepo
+      ? {
+          issueRepo: {
+            owner: issueOwnerRepo.owner,
+            repo: issueOwnerRepo.repo,
+            ...(issueOwnerRepo.host ? { host: issueOwnerRepo.host } : {})
+          }
+        }
+      : {})
   }
 }
 
@@ -85,6 +102,11 @@ export function mapPullRequestWorkItem(
           )
           .filter(Boolean)
       : [],
+    ...(typeof item.milestone === 'object' && item.milestone !== null
+      ? { milestone: String((item.milestone as { title?: unknown }).title ?? '') }
+      : typeof item.milestone === 'string' || item.milestone === null
+        ? { milestone: item.milestone }
+        : {}),
     updatedAt: String(item.updated_at ?? item.updatedAt ?? ''),
     ...authorFieldsFromUnknown(item),
     branchName:

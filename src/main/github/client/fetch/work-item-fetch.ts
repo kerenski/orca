@@ -37,7 +37,7 @@ export async function fetchIssueWorkItem(
     if ('pull_request' in item) {
       return null
     }
-    return mapIssueWorkItem(item)
+    return mapIssueWorkItem(item, ownerRepo)
   }
 
   if (connectionId) {
@@ -47,10 +47,16 @@ export async function fetchIssueWorkItem(
   }
 
   const { stdout } = await ghExecFileAsync(
-    ['issue', 'view', String(number), '--json', 'number,title,state,url,labels,updatedAt,author'],
+    [
+      'issue',
+      'view',
+      String(number),
+      '--json',
+      'number,title,state,url,labels,milestone,updatedAt,author'
+    ],
     ghOptions
   )
-  return mapIssueWorkItem(JSON.parse(stdout) as Record<string, unknown>)
+  return mapIssueWorkItem(JSON.parse(stdout) as Record<string, unknown>, null)
 }
 
 // Why: REST /pulls/{n} lacks latestReviews, so pull review fields from gh so reviewer lists aren't silently empty.

@@ -128,6 +128,141 @@
       ]
     },
     {
+      "name": "orca-skill",
+      "sourcePath": "skills/orca-skill",
+      "releaseRevision": 1,
+      "packageDigest": "2c1e672cf8d1ac05aeeaddae88019f0c1bd8aedb2a0ff32a68c13fd0d6870682",
+      "gitTreeSha": "d5e0a9b00de2e272d9c4e20dd58196c1c8de4755",
+      "files": [
+        {
+          "path": "OPTIMIZATION.md",
+          "size": 12753,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "b9526393a28e111fc3719c63c541dda854f1d8444990cec39892a51fb9d7eea1",
+          "textNormalizedSha256": "b9526393a28e111fc3719c63c541dda854f1d8444990cec39892a51fb9d7eea1",
+          "identitySha256": "b9526393a28e111fc3719c63c541dda854f1d8444990cec39892a51fb9d7eea1"
+        },
+        {
+          "path": "SKILL.md",
+          "size": 4786,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "b5563bf4cc7c67518f96fcf057239c4af354d85ae2da06bd84c5e4c758d7f0f8",
+          "textNormalizedSha256": "b5563bf4cc7c67518f96fcf057239c4af354d85ae2da06bd84c5e4c758d7f0f8",
+          "identitySha256": "b5563bf4cc7c67518f96fcf057239c4af354d85ae2da06bd84c5e4c758d7f0f8"
+        },
+        {
+          "path": "scripts/check-ci.sh",
+          "size": 7684,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "740ec22d8e3d2c21ac7bf4c54f433deb8b5ddde9156ebe9006e6798141521d7b",
+          "textNormalizedSha256": "740ec22d8e3d2c21ac7bf4c54f433deb8b5ddde9156ebe9006e6798141521d7b",
+          "identitySha256": "740ec22d8e3d2c21ac7bf4c54f433deb8b5ddde9156ebe9006e6798141521d7b"
+        },
+        {
+          "path": "scripts/ensure-worker.sh",
+          "size": 4282,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "4440b510ff064c70edcd2c2d9aef924b321be272b92e7e9dae4049e97ef585f2",
+          "textNormalizedSha256": "4440b510ff064c70edcd2c2d9aef924b321be272b92e7e9dae4049e97ef585f2",
+          "identitySha256": "4440b510ff064c70edcd2c2d9aef924b321be272b92e7e9dae4049e97ef585f2"
+        },
+        {
+          "path": "scripts/kimi-trust.sh",
+          "size": 1179,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "00193e6e39d8a976aaf2fe68887b872637bb8feed8051f32e7afde3bb664f633",
+          "textNormalizedSha256": "00193e6e39d8a976aaf2fe68887b872637bb8feed8051f32e7afde3bb664f633",
+          "identitySha256": "00193e6e39d8a976aaf2fe68887b872637bb8feed8051f32e7afde3bb664f633"
+        },
+        {
+          "path": "scripts/poll-dev-local.sh",
+          "size": 7976,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "44c87324c716d75cd8addd09c46bd622e12175e78b3d964f2f51549390c77ed9",
+          "textNormalizedSha256": "44c87324c716d75cd8addd09c46bd622e12175e78b3d964f2f51549390c77ed9",
+          "identitySha256": "44c87324c716d75cd8addd09c46bd622e12175e78b3d964f2f51549390c77ed9"
+        },
+        {
+          "path": "scripts/run-checks.sh",
+          "size": 4041,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "7037e72ba370ace961fdf29ad5b6f4a4eb8759910dbc0f3ec18ce706f26ba49c",
+          "textNormalizedSha256": "7037e72ba370ace961fdf29ad5b6f4a4eb8759910dbc0f3ec18ce706f26ba49c",
+          "identitySha256": "7037e72ba370ace961fdf29ad5b6f4a4eb8759910dbc0f3ec18ce706f26ba49c"
+        },
+        {
+          "path": "scripts/send-dev-task.sh",
+          "size": 7966,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "4119826563acb38ea2648c0cc828c8e3443f55faa1d32cb0e77b112cbde75d32",
+          "textNormalizedSha256": "4119826563acb38ea2648c0cc828c8e3443f55faa1d32cb0e77b112cbde75d32",
+          "identitySha256": "4119826563acb38ea2648c0cc828c8e3443f55faa1d32cb0e77b112cbde75d32"
+        },
+        {
+          "path": "scripts/send-review-round.sh",
+          "size": 453,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "f056fc006396289727e3ad58f605a441a781b84cdecdb2e41f72de3b937b03f2",
+          "textNormalizedSha256": "f056fc006396289727e3ad58f605a441a781b84cdecdb2e41f72de3b937b03f2",
+          "identitySha256": "f056fc006396289727e3ad58f605a441a781b84cdecdb2e41f72de3b937b03f2"
+        },
+        {
+          "path": "scripts/send-review.sh",
+          "size": 7120,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "5bd53e01b5ab720d0b9246004bae8011610cea4d127ab032d0cfb97e779b4850",
+          "textNormalizedSha256": "5bd53e01b5ab720d0b9246004bae8011610cea4d127ab032d0cfb97e779b4850",
+          "identitySha256": "5bd53e01b5ab720d0b9246004bae8011610cea4d127ab032d0cfb97e779b4850"
+        },
+        {
+          "path": "scripts/start-card.sh",
+          "size": 13490,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "8656db683774b991bbce5601e16477d6f549f5507f4cc7e7afc5928f25c4e2ef",
+          "textNormalizedSha256": "8656db683774b991bbce5601e16477d6f549f5507f4cc7e7afc5928f25c4e2ef",
+          "identitySha256": "8656db683774b991bbce5601e16477d6f549f5507f4cc7e7afc5928f25c4e2ef"
+        },
+        {
+          "path": "scripts/wait-dev-watchdog.sh",
+          "size": 6685,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "927b3dd0dbd4e06a451a9210c20d85c9e0347a054e7be9eeacaca4217752c289",
+          "textNormalizedSha256": "927b3dd0dbd4e06a451a9210c20d85c9e0347a054e7be9eeacaca4217752c289",
+          "identitySha256": "927b3dd0dbd4e06a451a9210c20d85c9e0347a054e7be9eeacaca4217752c289"
+        },
+        {
+          "path": "templates/controller-prompt.tpl.md",
+          "size": 13750,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "286330c740af99e4635a555b3566007c8b43a2f537fd01ff7243d555347b214b",
+          "textNormalizedSha256": "286330c740af99e4635a555b3566007c8b43a2f537fd01ff7243d555347b214b",
+          "identitySha256": "286330c740af99e4635a555b3566007c8b43a2f537fd01ff7243d555347b214b"
+        },
+        {
+          "path": "tiers.json",
+          "size": 1777,
+          "executable": false,
+          "classification": "text",
+          "exactSha256": "2bbb74ca8473a9504e0b78f02a5f343b138d02230e0a1719a6d80a5848b2813d",
+          "textNormalizedSha256": "2bbb74ca8473a9504e0b78f02a5f343b138d02230e0a1719a6d80a5848b2813d",
+          "identitySha256": "2bbb74ca8473a9504e0b78f02a5f343b138d02230e0a1719a6d80a5848b2813d"
+        }
+      ]
+    },
+    {
       "name": "orchestration",
       "sourcePath": "skills/orchestration",
       "releaseRevision": 28,

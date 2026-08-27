@@ -14,9 +14,8 @@ const {
 const { verifyLinuxGlibcFloor } = require('./scripts/verify-linux-glibc-floor.cjs')
 const { writeMacBuildCompatibility } = require('./scripts/mac-build-compatibility.cjs')
 const { verifyPackagedPluginResources } = require('./scripts/verify-packaged-plugin-resources.cjs')
-const {
-  verifyPackagedNodePtyJobOwnership
-} = require('./scripts/verify-packaged-node-pty-job-ownership.cjs')
+const { verifyPackagedCardSkillResource } = require('./scripts/verify-packaged-card-skill-resource.cjs')
+const { verifyPackagedNodePtyJobOwnership } = require('./scripts/verify-packaged-node-pty-job-ownership.cjs')
 const { verifySkillsCliRuntime } = require('./scripts/verify-skills-cli-runtime.cjs')
 
 // Why: dev-channel builds must carry the *release* identity — same bundle id,
@@ -85,11 +84,22 @@ const bundledPluginResources = {
   from: 'resources/plugins/launch',
   to: 'plugins/launch'
 }
+// Why: Wecir Dev launches start-card from a self-contained skill directory, and
+// the controller prompt resolves every orchestration script from the same root.
+const cardSkillResource = {
+  from: 'skills/orca-skill',
+  to: 'orca-skill'
+}
 // Why: the main bundle, packaged CLI, SSH paths, and speech worker all execute
 // from package directories where pnpm's symlink farm is absent. Copy the exact
 // runtime dependency closure to Resources/node_modules so bare require() calls
 // do not fall through to a developer checkout's node_modules.
-const commonExtraResources = [relayExtraResource, bundledPluginResources, skillFreshnessResources]
+const commonExtraResources = [
+  relayExtraResource,
+  bundledPluginResources,
+  skillFreshnessResources,
+  cardSkillResource
+]
 const macSpeechNativeResource = {
   from: 'node_modules/sherpa-onnx-darwin-${arch}',
   to: 'node_modules/sherpa-onnx-darwin-${arch}'
@@ -298,6 +308,7 @@ module.exports = {
     // Why: inspect electron-builder's real output so a broken extraResources
     // mapping fails packaging before bundled content reaches users.
     verifyPackagedPluginResources(resourcesDir)
+    verifyPackagedCardSkillResource(resourcesDir)
     chmodUnixCliLaunchers(resourcesDir, context.electronPlatformName)
     chmodMacServeSimHelpers(resourcesDir, context.electronPlatformName)
     for (const filename of readdirSync(resourcesDir)) {

@@ -5136,6 +5136,14 @@ const api = {
       ipcRenderer.on('speech:error', listener)
       return () => ipcRenderer.removeListener('speech:error', listener)
     }
+  },
+  wecirDev: {
+    analyzeCards: (args: unknown) => ipcRenderer.invoke('wecir-dev:analyzeCards', args),
+    startCard: (args: unknown) => ipcRenderer.invoke('wecir-dev:startCard', args),
+    startCardsBatch: (args: unknown) => ipcRenderer.invoke('wecir-dev:startCardsBatch', args),
+    getCardStatuses: (args: unknown) => ipcRenderer.invoke('wecir-dev:getCardStatuses', args),
+    sendControllerCommand: (args: unknown) =>
+      ipcRenderer.invoke('wecir-dev:sendControllerCommand', args)
   }
 }
 

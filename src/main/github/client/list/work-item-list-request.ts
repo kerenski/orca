@@ -77,7 +77,7 @@ export function buildWorkItemListRequest(args: {
         '120s',
         `search/issues?q=${encodeURIComponent(searchParts.join(' '))}&sort=created&order=desc&per_page=${limit}&page=${page}`,
         '--jq',
-        '.items'
+        '{items: .items, total_count: .total_count, incomplete_results: .incomplete_results}'
       ],
       offset: 0
     }
@@ -105,6 +105,8 @@ export type PartialWorkItemsResult = {
   items: MainWorkItem[]
   issuesError?: ClassifiedError
   prsError?: ClassifiedError
+  issuesHasNext?: boolean
+  prsHasNext?: boolean
 }
 
 export function assertSshRepoHasResolvedGitHubSource(args: {

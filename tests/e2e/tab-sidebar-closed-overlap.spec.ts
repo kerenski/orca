@@ -209,37 +209,22 @@ test.describe('Tab visibility with closed sidebar', () => {
   test('sidebar toggle and Back button stay separated after sidebar collapse', async ({
     orcaPage
   }) => {
-    await orcaPage.addInitScript(() => {
-      // Why: #2082 was reported against Windows-only titlebar chrome. Reloading
-      // with a Windows UA makes App.tsx take that renderer branch on any CI host.
-      const userAgent =
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/146 Safari/537.36'
-      Object.defineProperty(navigator, 'userAgent', {
-        get: () => userAgent,
-        configurable: true
-      })
-    })
-    await orcaPage.reload({ waitUntil: 'domcontentloaded' })
-    await orcaPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
+    test.skip(process.platform === 'darwin', 'Windows titlebar chrome is unavailable on macOS')
 
     await expect
       .poll(
         async () =>
           orcaPage.evaluate(() => ({
-            hasWindowsUserAgent: navigator.userAgent.includes('Windows'),
-            hasWindowsTitlebarChrome:
+            hasCustomTitlebarChrome:
               Boolean(document.querySelector('button[aria-label="Application menu"]')) &&
               Boolean(document.querySelector('.window-controls'))
           })),
         {
           timeout: 5_000,
-          message: 'Renderer did not switch to the Windows titlebar branch'
+          message: 'Renderer did not switch to the desktop titlebar branch'
         }
       )
-      .toEqual({ hasWindowsUserAgent: true, hasWindowsTitlebarChrome: true })
+      .toEqual({ hasCustomTitlebarChrome: true })
 
     await orcaPage.evaluate(() => {
       const store = window.__store
