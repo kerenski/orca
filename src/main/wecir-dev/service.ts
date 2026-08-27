@@ -17,7 +17,7 @@ import type {
   WecirDevStartCardsBatchArgs,
   WecirDevStartCardsBatchResult
 } from './types'
-import type { WecirDevCardRecord } from '../../shared/wecir-dev/contracts'
+import type { WecirDevCardRecord, WecirDevError } from '../../shared/wecir-dev/contracts'
 import { analyzeWecirDevDependencies } from '../../shared/wecir-dev/dependency-analysis'
 import { buildAnalysisCards } from './analysis-card-priorities'
 import {
