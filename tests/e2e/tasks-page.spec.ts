@@ -220,7 +220,7 @@ test.describe('Tasks page', () => {
       .poll(async () => getStoreState<string>(orcaPage, 'activeView'), { timeout: 5_000 })
       .toBe('tasks')
 
-    await expect(orcaPage.getByRole('button', { name: 'Close tasks' })).toBeVisible({
+    await expect(orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ })).toBeVisible({
       timeout: 10_000
     })
 
@@ -253,10 +253,12 @@ test.describe('Tasks page', () => {
       )
       .toBe(true)
     if (renderedSources.some((source) => source.source === 'github' && source.active)) {
-      await expect(orcaPage.getByRole('button', { name: 'Issues', exact: true })).toBeVisible()
-      await expect(orcaPage.getByRole('button', { name: 'PRs', exact: true })).toBeVisible()
-      await expect(orcaPage.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
-      await expect(orcaPage.getByPlaceholder(/Search GitHub (issues|PRs)/i)).toBeVisible()
+      await expect(orcaPage.getByRole('button', { name: /^(Issues|议题)$/ })).toBeVisible()
+      await expect(orcaPage.getByRole('button', { name: /^(PRs|PR)$/ })).toBeVisible()
+      await expect(orcaPage.getByRole('button', { name: /^(Projects|项目)$/ })).toBeVisible()
+      await expect(
+        orcaPage.getByPlaceholder(/Search GitHub (issues|PRs)|搜索 GitHub (议题|PR)/i)
+      ).toBeVisible()
     }
   })
 
@@ -268,9 +270,9 @@ test.describe('Tasks page', () => {
       .poll(async () => getStoreState<string>(orcaPage, 'activeView'), { timeout: 5_000 })
       .toBe('tasks')
     // Sanity: the tasks UI actually painted before we close it.
-    await expect(orcaPage.getByRole('button', { name: 'Close tasks' })).toBeVisible()
+    await expect(orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ })).toBeVisible()
 
-    await orcaPage.getByRole('button', { name: 'Close tasks' }).click()
+    await orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ }).click()
 
     await expect
       .poll(async () => getStoreState<string>(orcaPage, 'activeView'), { timeout: 5_000 })
@@ -282,7 +284,7 @@ test.describe('Tasks page', () => {
     // previous view was terminal (by far the common case in E2E setup), that
     // element must be visible. Tasks-close also hides the "Close tasks"
     // button regardless of previous view, so we assert that too.
-    await expect(orcaPage.getByRole('button', { name: 'Close tasks' })).toHaveCount(0)
+    await expect(orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ })).toHaveCount(0)
     if (previousView === 'terminal') {
       await expect(orcaPage.locator('.xterm').first()).toBeVisible({ timeout: 5_000 })
     }
@@ -291,7 +293,7 @@ test.describe('Tasks page', () => {
   test('reopening restores the GitHub page and scroll position', async ({ orcaPage }) => {
     await openMockedPaginatedGitHubTasks(orcaPage)
 
-    await orcaPage.getByRole('button', { name: 'Page 28', exact: true }).click()
+    await orcaPage.getByRole('button', { name: /^(Page 28|第\s*28\s*页)$/ }).click()
     await expect(orcaPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
 
     const list = orcaPage.locator('[data-task-list-scroll="github"]')
@@ -301,7 +303,7 @@ test.describe('Tasks page', () => {
     })
     await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(300)
 
-    await orcaPage.getByRole('button', { name: 'Close tasks' }).click()
+    await orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ }).click()
     await expect(list).toHaveCount(0)
     const clampedRowsStyle = await orcaPage.addStyleTag({
       content:
@@ -309,10 +311,9 @@ test.describe('Tasks page', () => {
     })
     await openTasksPage(orcaPage)
 
-    await expect(orcaPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page'
-    )
+    await expect(
+      orcaPage.getByRole('button', { name: /^(Page 28|第\s*28\s*页)$/ })
+    ).toHaveAttribute('aria-current', 'page')
     const restoredList = orcaPage.locator('[data-task-list-scroll="github"]')
     await expect.poll(() => restoredList.evaluate((element) => element.scrollTop)).toBe(0)
     await clampedRowsStyle.evaluate((element) => element.remove())
@@ -335,19 +336,18 @@ test.describe('Tasks page', () => {
       .poll(() => restoredList.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(300)
 
-    await orcaPage.getByRole('button', { name: 'Close tasks' }).click()
+    await orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ }).click()
     const pendingRestoreStyle = await orcaPage.addStyleTag({
       content:
         '[data-task-list-scroll="github"] > .divide-y { max-height: 0 !important; overflow: hidden !important; }'
     })
     await openTasksPage(orcaPage)
-    await expect(orcaPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page'
-    )
-    await orcaPage.getByRole('button', { name: 'Page 1', exact: true }).click()
+    await expect(
+      orcaPage.getByRole('button', { name: /^(Page 28|第\s*28\s*页)$/ })
+    ).toHaveAttribute('aria-current', 'page')
+    await orcaPage.getByRole('button', { name: /^(Page 1|第\s*1\s*页)$/ }).click()
     await pendingRestoreStyle.evaluate((element) => element.remove())
-    await expect(orcaPage.getByRole('button', { name: 'Page 1', exact: true })).toHaveAttribute(
+    await expect(orcaPage.getByRole('button', { name: /^(Page 1|第\s*1\s*页)$/ })).toHaveAttribute(
       'aria-current',
       'page'
     )
@@ -359,7 +359,7 @@ test.describe('Tasks page', () => {
       )
       .toBe(0)
 
-    await orcaPage.getByRole('button', { name: 'Page 28', exact: true }).click()
+    await orcaPage.getByRole('button', { name: /^(Page 28|第\s*28\s*页)$/ }).click()
     await expect(orcaPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
     await restoredList.evaluate((element) => {
       element.scrollTop = 360
@@ -368,19 +368,18 @@ test.describe('Tasks page', () => {
     await expect
       .poll(() => restoredList.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(300)
-    await orcaPage.getByRole('button', { name: 'Close tasks' }).click()
+    await orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ }).click()
 
     const permanentlyClampedRowsStyle = await orcaPage.addStyleTag({
       content:
         '[data-task-list-scroll="github"] > .divide-y { max-height: 0 !important; overflow: hidden !important; }'
     })
     await openTasksPage(orcaPage)
-    await expect(orcaPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
-      'aria-current',
-      'page'
-    )
+    await expect(
+      orcaPage.getByRole('button', { name: /^(Page 28|第\s*28\s*页)$/ })
+    ).toHaveAttribute('aria-current', 'page')
     await orcaPage.waitForTimeout(5_500)
-    await orcaPage.getByRole('button', { name: 'Close tasks' }).click()
+    await orcaPage.getByRole('button', { name: /Close tasks|关闭任务/ }).click()
     await expect
       .poll(async () => {
         const position = await getStoreState<{ scrollTop: number }>(orcaPage, 'taskListPosition')
@@ -395,7 +394,7 @@ test.describe('Tasks page', () => {
   }) => {
     await openInstrumentedGitHubTasksPage(orcaPage)
 
-    const input = orcaPage.getByPlaceholder('Search GitHub issues...')
+    const input = orcaPage.getByPlaceholder(/Search GitHub issues\.\.\.|搜索 GitHub 议题\.\.\./i)
     const existingIssue = orcaPage.getByText('Existing GitHub issue', { exact: true })
     await expect(input).toBeVisible()
     await expect(existingIssue).toBeVisible()

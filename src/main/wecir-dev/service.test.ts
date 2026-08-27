@@ -153,7 +153,13 @@ describe('WecirDevService', () => {
           checks: []
         }
       ],
-      errors: [{ number: 2, type: 'issue', error: { type: 'not_found', message: 'missing' } }]
+      errors: [
+        {
+          number: 2,
+          type: 'issue',
+          error: { type: 'permission_denied', message: 'GitHub token is not authenticated' }
+        }
+      ]
     })
     const service = new WecirDevService(store, {
       runCard: makeRunner(),
@@ -176,16 +182,33 @@ describe('WecirDevService', () => {
     expect(analyzedIssue).toMatchObject({
       priority: 'normal',
       name: 'issue-1-same-title-r2',
-      dependencies: [{ relation: 'blocked_by', targetCardId: 'repo-1:2' }],
+      dependencies: [
+        expect.objectContaining({
+          relation: 'blocked_by',
+          targetReference: expect.objectContaining({ number: 2 }),
+          note: expect.stringContaining('explicit_text')
+        })
+      ],
       analysis: {
         suggestedPriority: 'normal',
-        dependencies: [{ relation: 'blocked_by', targetCardId: 'repo-1:2' }],
+        dependencies: [
+          expect.objectContaining({
+            relation: 'blocked_by',
+            targetReference: expect.objectContaining({ number: 2 })
+          })
+        ],
         generatedAt: '2026-08-26T00:00:00.000Z'
       }
     })
     expect(result.cards.find((card) => card.reference.number === 2)?.analysis?.riskFlags).toContain(
       'github_detail_unavailable'
     )
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        code: 'github_auth_failed',
+        message: 'GitHub token is not authenticated'
+      })
+    ])
   })
 
   it('keeps rule priority and main order when model assistance disagrees', async () => {
@@ -342,8 +365,16 @@ describe('WecirDevService', () => {
     const issue = result.cards.find((card) => card.reference.number === 1)!
 
     expect(issue.dependencies).toEqual([
-      { relation: 'blocked_by', targetCardId: 'repo-1:2' },
-      { relation: 'blocked_by', targetCardId: 'repo-1:3' }
+      expect.objectContaining({
+        relation: 'blocked_by',
+        targetReference: expect.objectContaining({ number: 2 }),
+        note: 'cross_reference: #2'
+      }),
+      expect.objectContaining({
+        relation: 'blocked_by',
+        targetReference: expect.objectContaining({ number: 3 }),
+        note: 'cross_reference: #3'
+      })
     ])
     expect(issue.analysis).toMatchObject({ score: 0, priorityBand: 'P3' })
     expect(issue.analysis?.scoreDetails).toContainEqual(

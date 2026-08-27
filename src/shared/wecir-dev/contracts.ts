@@ -1,3 +1,5 @@
+import type { ProviderCheckSummary } from '../github/pull-request-types'
+
 export const WECIR_DEV_SCHEMA_VERSION = 1 as const
 
 export type WecirDevSchemaVersion = typeof WECIR_DEV_SCHEMA_VERSION
@@ -103,6 +105,9 @@ export type WecirDevAnalysisResult = {
   explanation?: string
   confidence?: number
   cycleWarning?: string
+  topoLevel?: number
+  blockedCount?: number
+  cycleDetected?: boolean
 }
 
 export type WecirDevError = {
@@ -140,6 +145,11 @@ export type WecirDevCardRecord = {
   repository: WecirDevRepositorySelection
   reference: WecirDevIssueReference
   priority: WecirDevPriority
+  labels?: string[]
+  assignees?: string[]
+  body?: string
+  url?: string
+  checksSummary?: ProviderCheckSummary
   analysis?: WecirDevAnalysisResult
   dependencies: WecirDevDependencyRelation[]
   status: WecirDevStatus

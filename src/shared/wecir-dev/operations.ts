@@ -29,7 +29,11 @@ export type WecirDevAnalyzeCardsArgs = {
   query?: string
   priorityConfig?: WecirDevPriorityConfig
 }
-export type WecirDevAnalyzeCardsResult = { cards: WecirDevCardRecord[]; analyzedAt: string }
+export type WecirDevAnalyzeCardsResult = {
+  cards: WecirDevCardRecord[]
+  analyzedAt: string
+  errors?: WecirDevError[]
+}
 export type WecirDevStartCardArgs = {
   repository: WecirDevRepositorySelection
   issueNumber: number
@@ -72,7 +76,8 @@ export const WecirDevOperationSchemas = {
       z
         .object({
           cards: z.array(WecirDevCardRecordSchema),
-          analyzedAt: z.iso.datetime({ offset: true })
+          analyzedAt: z.iso.datetime({ offset: true }),
+          errors: z.array(WecirDevErrorSchema).max(200).optional()
         })
         .strict()
     )

@@ -8,7 +8,37 @@ import type {
   WecirDevRepositorySelection
 } from '../../shared/wecir-dev/contracts'
 import { WECIR_DEV_SCHEMA_VERSION } from '../../shared/wecir-dev/contracts'
-import type { WecirDevGetCardStatusesArgs, WecirDevGetCardStatusesResult } from './types'
+import type {
+  WecirDevGetCardStatusesArgs,
+  WecirDevGetCardStatusesResult,
+  WecirDevStartCardArgs,
+  WecirDevStartCardResult,
+  WecirDevStartCardsBatchResult
+} from './types'
+
+export function assertServiceRunning(shuttingDown: boolean): void {
+  if (shuttingDown) {
+    throw cardError('unknown', 'Wecir Dev service is shutting down', false)
+  }
+}
+
+export function summarizeChecks(checks: { status: string; conclusion: string | null }[]) {
+  if (!checks.length) {
+    return undefined
+  }
+  const failed = checks.filter((check) => check.conclusion === 'failure').length
+  const pending = checks.filter((check) => check.status !== 'completed').length
+  return {
+    state: failed ? ('failure' as const) : pending ? ('pending' as const) : ('success' as const),
+    total: checks.length,
+    passed: checks.filter((check) => check.conclusion === 'success').length,
+    failed,
+    pending,
+    neutral: checks.filter(
+      (check) => check.conclusion === 'neutral' || check.conclusion === 'skipped'
+    ).length
+  }
+}
 
 export const CONTROLLER_COMMANDS: Record<string, string> = {
   start: '继续下一步',
@@ -35,7 +65,8 @@ export function createCardRecord(
   name: string,
   kind: 'issue' | 'pull_request',
   now: () => string,
-  labels: string[] = []
+  labels: string[] = [],
+  metadata?: Pick<WecirDevCardRecord, 'assignees' | 'body' | 'url' | 'checksSummary' | 'labels'>
 ): WecirDevCardRecord {
   const timestamp = now()
   const priority: WecirDevPriority = labels.some((label) => /critical|blocker/i.test(label))
@@ -55,6 +86,7 @@ export function createCardRecord(
       repository: repository.name?.trim() || 'unknown-repository'
     },
     priority,
+    ...(metadata ?? { labels }),
     dependencies: [],
     status: 'queued',
     createdAt: timestamp,
@@ -135,4 +167,48 @@ export function toCardError(error: unknown): WecirDevError {
       retryable: true
     }
   )
+}
+
+export function analysisError(
+  message: string,
+  details?: Record<string, string | number | boolean>,
+  code: WecirDevError['code'] = 'unknown'
+): WecirDevError {
+  return { code, message, retryable: true, ...(details ? { details } : {}) }
+}
+
+export function githubAnalysisError(
+  error: { type?: string; message: string },
+  details?: Record<string, string | number | boolean>
+): WecirDevError {
+  const authenticationFailure =
+    error.type === 'permission_denied' ||
+    /not authenticated|authentication required|authentication failed|token|credentials|logged in/i.test(
+      error.message
+    )
+  return analysisError(
+    error.message,
+    details,
+    authenticationFailure ? 'github_auth_failed' : 'unknown'
+  )
+}
+
+export async function runCardBatch(
+  args: {
+    cards: Omit<WecirDevStartCardArgs, 'repository'>[]
+    repository: WecirDevStartCardArgs['repository']
+  },
+  startCard: (args: WecirDevStartCardArgs) => Promise<WecirDevStartCardResult>
+): Promise<WecirDevStartCardsBatchResult> {
+  const items: WecirDevStartCardsBatchResult['items'] = []
+  for (const cardArgs of args.cards) {
+    try {
+      const result = await startCard({ ...cardArgs, repository: args.repository })
+      items.push({ issueNumber: cardArgs.issueNumber, ok: true, card: result.card })
+    } catch (error) {
+      items.push({ issueNumber: cardArgs.issueNumber, ok: false, error: toCardError(error) })
+      return { items, stoppedOnFailure: true }
+    }
+  }
+  return { items, stoppedOnFailure: false }
 }

@@ -42,10 +42,28 @@ export async function buildAnalysisCards(
     input.items.map(async (item): Promise<AnalyzedCard> => {
       const dependencyAnalysis = input.dependencyByIssue.get(item.number)
       const dependencies =
-        dependencyAnalysis?.dependsOn.map((number) => ({
-          relation: 'blocked_by' as const,
-          targetCardId: `${input.repository.repositoryId}:${number}`
-        })) ?? []
+        dependencyAnalysis?.dependsOn.map((number) => {
+          const target = input.items.find((candidate) => candidate.number === number)
+          const source = dependencyAnalysis.relationSources.find(
+            (candidate) => candidate.relation === 'blocked_by' && candidate.targetNumber === number
+          )
+          return {
+            relation: 'blocked_by' as const,
+            ...(target
+              ? {
+                  targetReference: {
+                    kind: target.type === 'pr' ? ('pull_request' as const) : ('issue' as const),
+                    number: target.number,
+                    owner: input.owner,
+                    repository: input.repositoryName,
+                    title: target.title,
+                    ...(target.url ? { url: target.url } : {})
+                  }
+                }
+              : { targetCardId: `${input.repository.repositoryId}:${number}` }),
+            ...(source?.text ? { note: `${source.kind}: ${source.text}` } : {})
+          }
+        }) ?? []
       const referencedIssueCount = new Set(
         (dependencyAnalysis?.relationSources ?? [])
           .filter((source) => source.kind === 'cross_reference')
@@ -75,7 +93,14 @@ export async function buildAnalysisCards(
         uniqueCardName(cardNameForIssue(item.number, item.title), input.usedNames),
         item.type === 'pr' ? 'pull_request' : 'issue',
         input.now,
-        item.labels
+        item.labels,
+        {
+          labels: item.labels,
+          assignees: item.assignees,
+          body: item.body,
+          url: item.url,
+          checksSummary: item.checksSummary
+        }
       )
       const riskFlags = [
         ...(input.failedDetails.has(item.number) ? ['github_detail_unavailable'] : []),
@@ -95,6 +120,9 @@ export async function buildAnalysisCards(
         suggestedTier: priority.suggestedTier,
         explanation: priority.explanation,
         confidence: priority.confidence,
+        topoLevel: dependencyAnalysis?.topoLevel ?? 0,
+        blockedCount: dependencyAnalysis?.blockedCount ?? 0,
+        cycleDetected: dependencyAnalysis?.cycleDetected ?? false,
         ...(priority.cycleWarning ? { cycleWarning: priority.cycleWarning } : {})
       }
       let analysis = ruleAnalysis

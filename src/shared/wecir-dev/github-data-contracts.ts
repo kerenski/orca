@@ -67,6 +67,15 @@ export type WecirDevGitHubItem = {
   milestone?: string | null
   updatedAt: string
   author: string | null
+  body?: string
+  checksSummary?: {
+    state: 'success' | 'failure' | 'pending' | 'neutral' | 'none'
+    total: number
+    passed: number
+    failed: number
+    pending: number
+    neutral: number
+  }
   references: WecirDevGitHubReference[]
   comments: WecirDevGitHubCommentSummary
 }

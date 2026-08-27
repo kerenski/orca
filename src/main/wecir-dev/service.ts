@@ -28,12 +28,18 @@ import {
 import {
   CONTROLLER_COMMANDS,
   buildCardStatuses,
+  assertServiceRunning,
   cardError,
   cardRecordKey,
   createCardRecord,
   requireLocalRepo,
-  toCardError
+  toCardError,
+  summarizeChecks,
+  analysisError,
+  githubAnalysisError,
+  runCardBatch
 } from './service-support'
+
 export class WecirDevService {
   private readonly cards = new Map<string, WecirDevCardRecord>()
   private readonly monitor = new ControllerMonitor()
@@ -54,7 +60,7 @@ export class WecirDevService {
     this.priorityConfig = dependencies.priorityConfig
   }
   async analyzeCards(args: WecirDevAnalyzeCardsArgs): Promise<WecirDevAnalyzeCardsResult> {
-    this.assertRunning()
+    assertServiceRunning(this.shuttingDown)
     const repo = requireLocalRepo(this.store, args.repository.repositoryId, args.repository.path)
     const result = await listGitHubData({
       repoPath: repo.path,
@@ -63,6 +69,9 @@ export class WecirDevService {
       query: args.query,
       connectionId: getGitHubRepoConnectionId(repo)
     })
+    const analysisErrors: WecirDevError[] = Object.entries(result.errors ?? {}).map(
+      ([source, error]) => githubAnalysisError(error, { source })
+    )
     const selected = args.issueNumbers ? new Set(args.issueNumbers) : undefined
     const items = result.items.filter((item) => !selected || selected.has(item.number))
     const owner = resolveGitHubOwner(args.repository.owner, result.sources, items)
@@ -84,8 +93,19 @@ export class WecirDevService {
       const details = await getGitHubDataBatch(detailArgs)
       detailItems = details.items
       failedDetails = new Set(details.errors.map((error) => error.number))
-    } catch {
+      for (const detailError of details.errors) {
+        analysisErrors.push(
+          githubAnalysisError(detailError.error, {
+            issueNumber: detailError.number,
+            ...(detailError.type ? { type: detailError.type } : {})
+          })
+        )
+      }
+    } catch (error) {
       failedDetails = new Set(items.map((item) => item.number))
+      analysisErrors.push(
+        analysisError(error instanceof Error ? error.message : 'Unable to load details')
+      )
     }
     const detailsByIssue = new Map(detailItems.map((detail) => [detail.item.number, detail]))
     const analyzedItems = items.map((item) => {
@@ -97,6 +117,8 @@ export class WecirDevService {
         ...item,
         ...detail.item,
         labels: detail.item.labels ?? item.labels,
+        body: detail.body,
+        checksSummary: summarizeChecks(detail.checks),
         references: detail.references
       }
     })
@@ -144,7 +166,7 @@ export class WecirDevService {
       }
       this.cards.set(key, card)
     }
-    return { cards, analyzedAt }
+    return { cards, analyzedAt, ...(analysisErrors.length ? { errors: analysisErrors } : {}) }
   }
   async startCard(args: WecirDevStartCardArgs): Promise<WecirDevStartCardResult> {
     if (this.shuttingDown) {
@@ -169,31 +191,22 @@ export class WecirDevService {
   }
   async startCardsBatch(args: WecirDevStartCardsBatchArgs): Promise<WecirDevStartCardsBatchResult> {
     requireLocalRepo(this.store, args.repository.repositoryId, args.repository.path)
-    const items: WecirDevStartCardsBatchResult['items'] = []
-    let stoppedOnFailure = false
-    for (const cardArgs of args.cards) {
-      try {
-        const result = await this.startCard({ ...cardArgs, repository: args.repository })
-        items.push({ issueNumber: cardArgs.issueNumber, ok: true, card: result.card })
-      } catch (error) {
-        items.push({ issueNumber: cardArgs.issueNumber, ok: false, error: toCardError(error) })
-        stoppedOnFailure = true
-        break
-      }
-    }
-    return { items, stoppedOnFailure }
+    return runCardBatch(args, (cardArgs) => this.startCard(cardArgs))
   }
   getCardStatuses(args: WecirDevGetCardStatusesArgs): WecirDevGetCardStatusesResult {
-    this.assertRunning()
+    assertServiceRunning(this.shuttingDown)
     requireLocalRepo(this.store, args.repositoryId)
     return buildCardStatuses(this.cards.values(), args)
   }
   async sendControllerCommand(
     args: WecirDevSendControllerCommandArgs
   ): Promise<WecirDevSendControllerCommandResult> {
-    this.assertRunning()
+    assertServiceRunning(this.shuttingDown)
     requireLocalRepo(this.store, args.repositoryId)
-    const card = this.findCard(args.repositoryId, args.cardId)
+    const card = this.cards.get(cardRecordKey(args.repositoryId, args.cardId))
+    if (!card) {
+      throw cardError('invalid_parameters', 'Card was not found', false)
+    }
     const handle = card.controllerHandle
     if (!handle || !this.monitor.matches(card.cardId, args.repositoryId, handle)) {
       throw cardError('pty_binding_lost', 'Controller PTY binding is no longer valid', false)
@@ -283,18 +296,6 @@ export class WecirDevService {
       }
       this.cards.set(cardRecordKey(repositoryId, failed.cardId), failed)
       throw error
-    }
-  }
-  private findCard(repositoryId: string, cardId: string): WecirDevCardRecord {
-    const card = this.cards.get(cardRecordKey(repositoryId, cardId))
-    if (!card) {
-      throw cardError('invalid_parameters', 'Card was not found', false)
-    }
-    return card
-  }
-  private assertRunning(): void {
-    if (this.shuttingDown) {
-      throw cardError('unknown', 'Wecir Dev service is shutting down', false)
     }
   }
 }

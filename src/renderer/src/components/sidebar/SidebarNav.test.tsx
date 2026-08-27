@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   openActivityPage: vi.fn(),
   openMobilePage: vi.fn(),
   openArtifactsPage: vi.fn(),
+  openWecirDevCardPage: vi.fn(),
   openModal: vi.fn(),
   updateSettings: vi.fn(),
   refreshPreflightStatus: vi.fn(),
@@ -135,6 +136,7 @@ function setSidebarState({
     openActivityPage: mocks.openActivityPage,
     openMobilePage: mocks.openMobilePage,
     openArtifactsPage: mocks.openArtifactsPage,
+    openWecirDevCardPage: mocks.openWecirDevCardPage,
     openModal: mocks.openModal,
     updateSettings: mocks.updateSettings,
     preflightStatus: { glab: { installed: false } },
@@ -316,6 +318,14 @@ describe('SidebarNav', () => {
     await clickButton(getButtonByText(container, 'Artifacts'))
 
     expect(mocks.openArtifactsPage).toHaveBeenCalledOnce()
+  })
+
+  it('opens Wecir Dev Cards from the sidebar', async () => {
+    const container = await renderSidebarNav()
+
+    await clickButton(getButtonByText(container, 'Wecir Dev Cards'))
+
+    expect(mocks.openWecirDevCardPage).toHaveBeenCalledOnce()
   })
 
   it('hides Artifacts from its context menu', async () => {
