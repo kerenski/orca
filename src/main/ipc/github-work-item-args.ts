@@ -1,5 +1,6 @@
 import type { TaskSourceContext } from '../../shared/task-source-context'
 import type { IssueSourcePreference } from '../../shared/repo-types'
+import type { GitHubRepositoryIdentity } from '../../shared/github/work-item-types'
 
 export type WorkItemArgs = {
   repoPath: string
@@ -7,6 +8,8 @@ export type WorkItemArgs = {
   sourceContext?: TaskSourceContext | null
   number: number
   type?: 'issue' | 'pr'
+  issueRepo?: GitHubRepositoryIdentity
+  prRepo?: GitHubRepositoryIdentity
 }
 
 type RegisteredRepoContext = {
@@ -32,11 +35,13 @@ export function dispatchWorkItem<T>(
     t?: 'issue' | 'pr',
     connectionId?: string | null,
     localGitOptions?: LocalGitExecOptions,
-    preference?: IssueSourcePreference
+    preference?: IssueSourcePreference,
+    issueRepo?: GitHubRepositoryIdentity,
+    prRepo?: GitHubRepositoryIdentity
   ) => Promise<T | null>,
   localGitOptions?: LocalGitExecOptions
 ): Promise<T | null> | null {
-  const { number, type } = args
+  const { number, type, issueRepo, prRepo } = args
   if (typeof number !== 'number' || !Number.isInteger(number) || number < 1) {
     return null
   }
@@ -49,6 +54,8 @@ export function dispatchWorkItem<T>(
     safeType,
     repo.connectionId ?? null,
     localGitOptions,
-    repo.issueSourcePreference
+    repo.issueSourcePreference,
+    issueRepo,
+    prRepo
   )
 }

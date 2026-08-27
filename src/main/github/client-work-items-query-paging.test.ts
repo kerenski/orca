@@ -231,7 +231,7 @@ describe('listWorkItems query paging', () => {
         '120s',
         `search/issues?q=${encodeURIComponent('repo:acme/widgets is:issue is:open')}&sort=created&order=desc&per_page=10&page=2`,
         '--jq',
-        '.items'
+        '{items: .items, total_count: .total_count, incomplete_results: .incomplete_results}'
       ],
       { cwd: '/repo-root' }
     )

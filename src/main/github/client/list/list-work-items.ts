@@ -77,6 +77,10 @@ export async function listWorkItems(
         upstreamCandidate: prResolved.upstreamCandidate
       },
       ...(errors ? { errors } : {}),
+      pagination: {
+        issuesHasNext: partial.issuesHasNext ?? false,
+        prsHasNext: partial.prsHasNext ?? false
+      },
       ...(issueResolved.fellBack ? { issueSourceFellBack: true } : {})
     }
   } finally {

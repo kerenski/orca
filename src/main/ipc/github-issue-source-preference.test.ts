@@ -146,7 +146,9 @@ describe('registerGitHubHandlers', () => {
       'pr',
       null,
       undefined,
-      'origin'
+      'origin',
+      undefined,
+      undefined
     )
     expect(getWorkItemDetailsMock).toHaveBeenCalledWith(
       '/workspace/repo',
@@ -154,7 +156,9 @@ describe('registerGitHubHandlers', () => {
       'pr',
       null,
       undefined,
-      'origin'
+      'origin',
+      undefined,
+      undefined
     )
   })
 })

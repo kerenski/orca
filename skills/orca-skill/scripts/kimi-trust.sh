@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # kimi-trust.sh —— 预信任一个 worktree 目录，让 kimi 交互模式不再弹「Trust this folder?」
-# 用法: bash $HOME/.orca-skill/scripts/kimi-trust.sh <worktree-absolute-path>
+# 用法: bash <skill-directory>/scripts/kimi-trust.sh <worktree-absolute-path>
 # 原理: kimi 把信任状态存在 ~/.kimi-code/workspace-trust/wd_<name>_<sha256(path)[:12]>
 #       内容为 {"root":"<path>","trustedAt":<ms>}。预置后 kimi --yolo 不会退出。
 set -euo pipefail
 
 WT_PATH="${1:-}"
 if [ -z "$WT_PATH" ]; then
-  echo "用法: bash $HOME/.orca-skill/scripts/kimi-trust.sh <worktree-absolute-path>" >&2
+  echo "用法: bash <skill-directory>/scripts/kimi-trust.sh <worktree-absolute-path>" >&2
   exit 1
 fi
 

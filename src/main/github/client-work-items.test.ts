@@ -266,7 +266,7 @@ describe('listWorkItems', () => {
         '120s',
         `search/issues?q=${encodeURIComponent('repo:acme/widgets is:issue assignee:@me')}&sort=created&order=desc&per_page=10&page=1`,
         '--jq',
-        '.items'
+        '{items: .items, total_count: .total_count, incomplete_results: .incomplete_results}'
       ],
       { cwd: '/repo-root' }
     )
@@ -280,7 +280,7 @@ describe('listWorkItems', () => {
         '--state',
         'all',
         '--json',
-        'number,title,state,url,labels,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests',
+        'number,title,state,url,labels,milestone,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests,assignees',
         '--repo',
         'acme/widgets',
         '--search',
@@ -325,6 +325,7 @@ describe('listWorkItems', () => {
         labels: [],
         updatedAt: '2026-03-29T00:00:00Z',
         author: 'octocat',
+        issueRepo: { owner: 'acme', repo: 'widgets' },
         assignees: [
           {
             login: 'test-assignee',
@@ -487,7 +488,7 @@ describe('listWorkItems', () => {
         '--state',
         'all',
         '--json',
-        'number,title,state,url,labels,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests',
+        'number,title,state,url,labels,milestone,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests,assignees',
         '--repo',
         'acme/widgets',
         '--search',
@@ -547,7 +548,7 @@ describe('listWorkItems', () => {
         '--state',
         'all',
         '--json',
-        'number,title,state,url,labels,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests',
+        'number,title,state,url,labels,milestone,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests,assignees',
         '--repo',
         'acme/widgets',
         '--search',
@@ -708,7 +709,7 @@ describe('listWorkItems', () => {
         '120s',
         `search/issues?q=${encodeURIComponent('repo:acme/widgets is:issue is:open')}&sort=created&order=desc&per_page=10&page=1`,
         '--jq',
-        '.items'
+        '{items: .items, total_count: .total_count, incomplete_results: .incomplete_results}'
       ],
       { cwd: '/repo-root' }
     )
@@ -721,7 +722,7 @@ describe('listWorkItems', () => {
         '--state',
         'all',
         '--json',
-        'number,title,state,url,labels,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests',
+        'number,title,state,url,labels,milestone,updatedAt,author,isDraft,headRefName,baseRefName,headRefOid,headRepositoryOwner,reviewRequests,assignees',
         '--repo',
         'acme/widgets',
         '--search',
@@ -754,7 +755,8 @@ describe('listWorkItems', () => {
         url: 'https://github.com/acme/widgets/issues/1',
         labels: [],
         updatedAt: '2026-03-31T00:00:00Z',
-        author: 'octocat'
+        author: 'octocat',
+        issueRepo: { owner: 'acme', repo: 'widgets' }
       }
     ])
   })

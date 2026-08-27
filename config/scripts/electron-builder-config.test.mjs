@@ -104,6 +104,10 @@ describe('electron-builder config', () => {
         from: 'resources/skills',
         to: 'skills'
       })
+      expect(electronBuilderConfig[platform].extraResources).toContainEqual({
+        from: 'skills/orca-skill',
+        to: 'orca-skill'
+      })
       expect(electronBuilderConfig[platform].extraResources).toEqual(
         expect.arrayContaining([bundledPluginResources])
       )
@@ -578,6 +582,9 @@ describe('electron-builder config', () => {
           join(resourcesDir, 'plugins', 'launch'),
           { recursive: true }
         )
+        await cp(join(process.cwd(), 'skills', 'orca-skill'), join(resourcesDir, 'orca-skill'), {
+          recursive: true
+        })
         await mkdir(join(resourcesDir, 'node_modules', 'zod', 'src'), { recursive: true })
         // Why: afterPack now fails hard when the unpacked daemon entry is
         // missing, so the fixture must carry one like a real package layout.

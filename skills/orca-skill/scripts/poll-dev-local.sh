@@ -25,13 +25,13 @@
 # controller 调用方式：
 #   事件驱动模式（推荐，v3）：send 脚本派发后自动启动看门狗，controller 结束回合下班；
 #   被 DEV_SIGNAL / WORKER_DEAD / TIMEOUT 唤醒后跑一次硬验证（通知只是门铃，不是完成证明）：
-#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> [--round <N>] <baseline> --once
+#        bash <skill-directory>/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> [--round <N>] <baseline> --once
 #   1) 阻塞等待首轮开发完成（旧模式，向后兼容保留）：
-#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c>
+#        bash <skill-directory>/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c>
 #   2) 等待第 N 轮修复完成（baseline 传上一轮结束时的 ahead；round 传当前修复轮次）：
-#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> --round <N> <baseline>
+#        bash <skill-directory>/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> --round <N> <baseline>
 #   3) 仅查一次状态（不做存活检测、不催提交）：
-#        bash $HOME/.orca-skill/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> [--round <N>] <baseline> --once
+#        bash <skill-directory>/scripts/poll-dev-local.sh --worker <handle> --issue <n> --card <c> [--round <N>] <baseline> --once
 #
 # 退出码：
 #   0  开发/修复完成且确有实质改动（DEV_DONE:ahead=...:real=...:baseline=...）
