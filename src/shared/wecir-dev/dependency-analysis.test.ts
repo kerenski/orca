@@ -66,15 +66,19 @@ describe('Wecir Dev dependency analysis', () => {
     expect(analyzeWecirDevDependencies(input.toReversed())).toEqual(result)
   })
 
-  it('marks cycles and excludes cyclic dependents from execution', () => {
+  it('marks only cycle members and excludes cyclic dependents from execution', () => {
     const result = analyzeWecirDevDependencies([
       item(10, { body: 'depends on #11' }),
       item(11, { body: 'depends on #10' }),
-      item(12, { body: 'depends on #10' })
+      item(12, { body: 'depends on #10' }),
+      item(13)
     ])
-    expect(result.every((entry) => entry.cycleDetected)).toBe(true)
+    expect(result.find((entry) => entry.issueNumber === 10)?.cycleDetected).toBe(true)
+    expect(result.find((entry) => entry.issueNumber === 11)?.cycleDetected).toBe(true)
+    expect(result.find((entry) => entry.issueNumber === 12)?.cycleDetected).toBe(false)
+    expect(result.find((entry) => entry.issueNumber === 13)?.cycleDetected).toBe(false)
     expect(result[0].cycleNodes).toEqual([10, 11])
-    expect(result[0].executableOrder).toEqual([])
+    expect(result[0].executableOrder).toEqual([13])
   })
 
   it('returns strict JSON-safe analysis results', () => {

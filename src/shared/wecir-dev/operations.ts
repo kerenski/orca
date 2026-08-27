@@ -9,6 +9,7 @@ import type {
   WecirDevRepositorySelection,
   WecirDevStatus
 } from './contracts'
+import type { WecirDevPriorityConfig } from './card-priority-analysis'
 import {
   WecirDevCardRecordSchema,
   WecirDevErrorSchema,
@@ -26,6 +27,7 @@ export type WecirDevAnalyzeCardsArgs = {
   repository: WecirDevRepositorySelection
   issueNumbers?: number[]
   query?: string
+  priorityConfig?: WecirDevPriorityConfig
 }
 export type WecirDevAnalyzeCardsResult = { cards: WecirDevCardRecord[]; analyzedAt: string }
 export type WecirDevStartCardArgs = {

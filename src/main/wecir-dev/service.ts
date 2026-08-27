@@ -19,38 +19,39 @@ import type {
 } from './types'
 import type { WecirDevCardRecord } from '../../shared/wecir-dev/contracts'
 import { analyzeWecirDevDependencies } from '../../shared/wecir-dev/dependency-analysis'
+import { buildAnalysisCards } from './analysis-card-priorities'
 import {
   getGitHubSourceForItem,
   resolveGitHubOwner,
-  resolveGitHubRepository,
-  uniqueCardName
+  resolveGitHubRepository
 } from './analysis-support'
 import {
   CONTROLLER_COMMANDS,
   buildCardStatuses,
   cardError,
-  cardNameForIssue,
   cardRecordKey,
   createCardRecord,
   requireLocalRepo,
   toCardError
 } from './service-support'
-
 export class WecirDevService {
   private readonly cards = new Map<string, WecirDevCardRecord>()
   private readonly monitor = new ControllerMonitor()
   private readonly runCard
   private readonly now
+  private readonly modelAssist
+  private readonly priorityConfig
   private readonly inFlight = new Map<string, Promise<WecirDevStartCardResult>>()
   private readonly abortControllers = new Map<string, AbortController>()
   private shuttingDown = false
-
   constructor(
     private readonly store: Store,
     dependencies: WecirDevServiceDependencies = {}
   ) {
     this.runCard = dependencies.runCard ?? createCardRunner()
     this.now = dependencies.now ?? (() => new Date().toISOString())
+    this.modelAssist = dependencies.modelAssist
+    this.priorityConfig = dependencies.priorityConfig
   }
   async analyzeCards(args: WecirDevAnalyzeCardsArgs): Promise<WecirDevAnalyzeCardsResult> {
     this.assertRunning()
@@ -87,7 +88,19 @@ export class WecirDevService {
       failedDetails = new Set(items.map((item) => item.number))
     }
     const detailsByIssue = new Map(detailItems.map((detail) => [detail.item.number, detail]))
-    const dependencyItems = items.map((item) => {
+    const analyzedItems = items.map((item) => {
+      const detail = detailsByIssue.get(item.number)
+      if (!detail) {
+        return item
+      }
+      return {
+        ...item,
+        ...detail.item,
+        labels: detail.item.labels ?? item.labels,
+        references: detail.references
+      }
+    })
+    const dependencyItems = analyzedItems.map((item) => {
       const detail = detailsByIssue.get(item.number)
       return {
         number: item.number,
@@ -95,7 +108,7 @@ export class WecirDevService {
         body: detail?.body,
         labels: detail?.item.labels ?? item.labels,
         comments: detail?.comments.latest ? [detail.comments.latest.body] : undefined,
-        references: detail?.references ?? item.references
+        references: item.references
       }
     })
     const dependencyByIssue = new Map(
@@ -110,38 +123,26 @@ export class WecirDevService {
         .filter((card) => card.repository.repositoryId === args.repository.repositoryId)
         .map((card) => card.name)
     )
-    const cards = items.map((item) => {
-      const dependencyAnalysis = dependencyByIssue.get(item.number)
-      const dependencies =
-        dependencyAnalysis?.dependsOn.map((number) => ({
-          relation: 'blocked_by' as const,
-          targetCardId: `${args.repository.repositoryId}:${number}`
-        })) ?? []
-      const card = createCardRecord(
-        { ...args.repository, owner, name: repository },
-        item.number,
-        uniqueCardName(cardNameForIssue(item.number, item.title), usedNames),
-        item.type === 'pr' ? 'pull_request' : 'issue',
-        this.now,
-        item.labels
-      )
-      const riskFlags = [
-        ...(failedDetails.has(item.number) ? ['github_detail_unavailable'] : []),
-        ...(dependencyAnalysis?.cycleDetected ? ['dependency_cycle_detected'] : [])
-      ]
-      card.dependencies = dependencies
-      card.analysis = {
-        summary: `Deterministic GitHub analysis for ${item.type === 'pr' ? 'PR' : 'issue'} #${item.number}: ${item.title}`,
-        suggestedPriority: card.priority,
-        dependencies,
-        riskFlags,
-        acceptanceCriteria: ['Implementation satisfies the issue or pull request requirements'],
-        generatedAt: analyzedAt
-      }
-      return card
+    const cards = await buildAnalysisCards({
+      items: analyzedItems,
+      repository: args.repository,
+      owner,
+      repositoryName: repository,
+      analyzedAt,
+      now: this.now,
+      usedNames,
+      failedDetails,
+      dependencyByIssue,
+      modelAssist: this.modelAssist,
+      priorityConfig: args.priorityConfig ?? this.priorityConfig
     })
     for (const card of cards) {
-      this.cards.set(cardRecordKey(card.repository.repositoryId, card.cardId), card)
+      const key = cardRecordKey(card.repository.repositoryId, card.cardId)
+      const existing = this.cards.get(key)
+      if (existing) {
+        card.priority = existing.priority
+      }
+      this.cards.set(key, card)
     }
     return { cards, analyzedAt }
   }
