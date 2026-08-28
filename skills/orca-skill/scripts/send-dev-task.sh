@@ -2,12 +2,13 @@
 # send-dev-task.sh —— 向 worker 发首轮开发指令（固定话术：日志 sentinel + commit/push）
 # 话术要点来自 docs/Orca两层编排闭环流程-v2.md §7（内置在脚本里，controller 无需记忆）
 #
-# 用法：bash $HOME/.orca-skill/scripts/send-dev-task.sh --issue <n> --card <c> --worker <handle> [--extra "<补充要求>"]
+# 用法：bash ${SCRIPT_DIR}/send-dev-task.sh --issue <n> --card <c> --worker <handle> [--extra "<补充要求>"]
 # 输出：DEV_TASK_SENT:<issue>-<card> -> <handle>
 # 退出码：0 成功；1 参数错误；2 发送失败
 
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ISSUE=""
 CARD=""
 HANDLE=""
@@ -59,7 +60,7 @@ printf 'TITLE: %s\n\nBODY:\n%s\n' "${ISSUE_TITLE}" "${ISSUE_BODY}" > "/tmp/${CAR
 ANCHOR_FILE=$(ls 开发日志/*/${ISSUE}-${CARD}.md 2>/dev/null | head -1)
 if [ -n "$ANCHOR_FILE" ] && grep -q "## 开发任务（首轮）" "$ANCHOR_FILE"; then
   echo "ERROR: 检测到本卡首轮开发日志已存在（${ANCHOR_FILE}），当前应为 review 修复轮，禁止使用 send-dev-task.sh 重发首轮。" >&2
-  echo "       请改用：bash $HOME/.orca-skill/scripts/send-review.sh --issue ${ISSUE} --card ${CARD} --round <N> --worker <handle> --file <意见md>" >&2
+  echo "       请改用：bash ${SCRIPT_DIR}/send-review.sh --issue ${ISSUE} --card ${CARD} --round <N> --worker <handle> --file <意见md>" >&2
   exit 1
 fi
 
@@ -95,7 +96,7 @@ fi
 # baseline 在 send 之前实测（此刻 worker 尚未收到任务，ahead 绝对稳定），显式传给看门狗与输出，避免 send 后双实测 race
 BASELINE_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
 
-WATCHDOG="$HOME/.orca-skill/scripts/wait-dev-watchdog.sh"
+WATCHDOG="${SCRIPT_DIR}/wait-dev-watchdog.sh"
 STATE_DIR="/tmp/${CARD}"
 
 # 落盘自动化：send 成功后脚本已知全部字段，直接写 card-state.md（controller 无需再手写本轮落盘，省一个调用轮次）
@@ -114,7 +115,7 @@ start_watchdog() {
     echo "ERROR: 看门狗脚本不存在：${WATCHDOG}" >&2
     echo "       这意味着主 worktree 的 orca-skill 代码过旧或未同步" >&2
     echo "       请在主 worktree 执行：git pull origin HEAD" >&2
-    echo "       然后重新开卡：bash \$HOME/.orca-skill/scripts/start-card.sh --issue ${ISSUE} --card ${CARD} --tier <tier> --force" >&2
+    echo "       然后重新开卡：bash ${SCRIPT_DIR}/start-card.sh --issue ${ISSUE} --card ${CARD} --tier <tier> --force" >&2
     exit 1
   fi
 

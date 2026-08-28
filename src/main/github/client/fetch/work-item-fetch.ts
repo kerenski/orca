@@ -37,7 +37,7 @@ export async function fetchIssueWorkItem(
     if ('pull_request' in item) {
       return null
     }
-    return mapIssueWorkItem(item)
+    return mapIssueWorkItem(item, ownerRepo)
   }
 
   if (connectionId) {

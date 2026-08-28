@@ -1,4 +1,9 @@
 import type { SkillDiscoveryResult, SkillDiscoveryTarget } from '../../../shared/skills'
+import {
+  CardStartResultSchema,
+  type CardStartRequest,
+  type CardStartResult
+} from '../../../shared/card-start-contract'
 import { callRuntimeRpc, type RuntimeClientTarget } from './runtime-rpc-client'
 
 const SKILL_DISCOVERY_TIMEOUT_MS = 15_000
@@ -34,4 +39,14 @@ export async function discoverSkillsForRuntimeTarget(
     target?.refresh ? { refresh: true } : {},
     { timeoutMs: SKILL_DISCOVERY_TIMEOUT_MS }
   )
+}
+
+export async function startCardForRuntimeTarget(
+  runtimeTarget: RuntimeClientTarget,
+  request: CardStartRequest
+): Promise<CardStartResult> {
+  const raw = await callRuntimeRpc<unknown>(runtimeTarget, 'skills.startCard', request, {
+    timeoutMs: 120_000
+  })
+  return CardStartResultSchema.parse(raw)
 }

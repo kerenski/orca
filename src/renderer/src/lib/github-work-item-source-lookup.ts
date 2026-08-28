@@ -1,4 +1,8 @@
-import type { GitHubWorkItem, GitHubWorkItemDetails } from '../../../shared/github/work-item-types'
+import type {
+  GitHubRepositoryIdentity,
+  GitHubWorkItem,
+  GitHubWorkItemDetails
+} from '../../../shared/github/work-item-types'
 import type { TaskSourceContext } from '../../../shared/task-source-context'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import {
@@ -28,6 +32,8 @@ type GitHubWorkItemDetailsLookupArgs = {
   sourceContext?: TaskSourceContext | null
   number: number
   type: 'issue' | 'pr'
+  issueRepo?: GitHubRepositoryIdentity
+  prRepo?: GitHubRepositoryIdentity
 }
 
 function runtimeRepoId(args: Pick<GitHubWorkItemLookupArgs, 'repoId' | 'sourceContext'>): string {
@@ -102,7 +108,9 @@ export function lookupGitHubWorkItemDetailsForSource(
       {
         repo: getGitHubRuntimeRepoId(sourceContext, args.repoId),
         number: args.number,
-        type: args.type
+        type: args.type,
+        issueRepo: args.issueRepo,
+        prRepo: args.prRepo
       },
       { timeoutMs: 30_000 }
     )
@@ -112,6 +120,8 @@ export function lookupGitHubWorkItemDetailsForSource(
     repoId: args.repoId,
     sourceContext,
     number: args.number,
-    type: args.type
+    type: args.type,
+    issueRepo: args.issueRepo,
+    prRepo: args.prRepo
   })
 }

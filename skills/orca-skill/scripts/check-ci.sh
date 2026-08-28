@@ -9,13 +9,13 @@
 #
 # 用法：
 #   # 默认：查当前分支所属 open PR 的真实 CI（推荐，方向 A）
-#   bash $HOME/.orca-skill/scripts/check-ci.sh [--timeout <sec>]
+#   bash <skill-directory>/scripts/check-ci.sh [--timeout <sec>]
 #
 #   # 显式指定 PR 号（该 PR 必须已存在）
-#   bash $HOME/.orca-skill/scripts/check-ci.sh --pr <number> [--timeout <sec>]
+#   bash <skill-directory>/scripts/check-ci.sh --pr <number> [--timeout <sec>]
 #
 #   # 仅查某 commit 的 checks（仅供参考，不代表 PR CI，会打印 WARNING）
-#   bash $HOME/.orca-skill/scripts/check-ci.sh --sha <sha> [--timeout <sec>]
+#   bash <skill-directory>/scripts/check-ci.sh --sha <sha> [--timeout <sec>]
 #
 # 退出码：
 #   0  所有 checks 完成且通过（仅 pass/skipping，打印 CI_PASS:...）
@@ -75,8 +75,8 @@ if [ -n "$PR_NUM" ]; then
     # 这是正常未完成态，不是错误——只有 8 之外的非 0 才是真错误（如鉴权/网络）。
     out=$(gh pr checks "$PR_NUM" --repo "$OWNER_REPO" --json bucket,name,state,link 2>/dev/null)
     rc=$?
-    if [ "$rc" -ne 0 ] && [ "$rc" -ne 8 ]; then
-      echo "ERROR: 调用 gh pr checks 失败（exit=$rc）" >&2
+    if [ "$rc" -ne 0 ] && [ "$rc" -ne 8 ] && [ "$rc" -ne 1 ]; then
+      echo "ERROR: 调用 gh pr checks 失败（exit=${rc}）" >&2
       exit 3
     fi
 

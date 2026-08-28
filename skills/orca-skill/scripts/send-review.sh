@@ -2,12 +2,13 @@
 # send-review.sh —— 向 worker 发第 N 轮 review 修复意见（固定话术框架 + 意见文件内容）
 # 话术要点来自 docs/Orca两层编排闭环流程-v2.md §7（内置在脚本里，controller 无需记忆）
 #
-# 用法：bash $HOME/.orca-skill/scripts/send-review.sh --issue <n> --card <c> --round <N> --worker <handle> --file <意见md>
+# 用法：bash ${SCRIPT_DIR}/send-review.sh --issue <n> --card <c> --round <N> --worker <handle> --file <意见md>
 # 输出：REVIEW_SENT:<issue>-<card> round=<N> -> <handle>
 # 退出码：0 成功；1 参数错误；2 意见文件不存在或发送失败
 
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ISSUE=""
 CARD=""
 ROUND=""
@@ -73,7 +74,7 @@ _send() {
 # baseline 在 send 之前实测（此刻 worker 尚未收到本轮意见，ahead 稳定），显式传给看门狗与输出，避免 send 后双实测 race
 BASELINE_AHEAD=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
 
-WATCHDOG="$HOME/.orca-skill/scripts/wait-dev-watchdog.sh"
+WATCHDOG="${SCRIPT_DIR}/wait-dev-watchdog.sh"
 STATE_DIR="/tmp/${CARD}"
 
 # 落盘自动化：send 成功后脚本已知全部字段，直接写 card-state.md（controller 无需再手写本轮落盘，省一个调用轮次）
@@ -92,7 +93,7 @@ start_watchdog() {
     echo "ERROR: 看门狗脚本不存在：${WATCHDOG}" >&2
     echo "       这意味着主 worktree 的 orca-skill 代码过旧或未同步" >&2
     echo "       请在主 worktree 执行：git pull origin HEAD" >&2
-    echo "       然后重新发送 review：bash \$HOME/.orca-skill/scripts/send-review.sh --issue ${ISSUE} --card ${CARD} --round ${ROUND} --worker ${HANDLE} --file ${FILE}" >&2
+    echo "       然后重新发送 review：bash ${SCRIPT_DIR}/send-review.sh --issue ${ISSUE} --card ${CARD} --round ${ROUND} --worker ${HANDLE} --file ${FILE}" >&2
     exit 1
   fi
 

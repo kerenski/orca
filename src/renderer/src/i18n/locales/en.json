@@ -2078,7 +2078,10 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Orca workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Orca workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "githubDependencyDiagnostics": "Dependency warnings: {{value0}} cycle(s), {{value1}} missing relation endpoint(s), {{value2}} self-dependency(ies). Cards remain available.",
+        "openCardWorkspace": "开卡：议题",
+        "openCard": "开卡"
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -5005,7 +5008,8 @@
           "fee535205b": "Tasks",
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
-          "skills": "Skills"
+          "skills": "Skills",
+          "cards": "卡片"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",

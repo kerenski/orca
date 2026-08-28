@@ -9,9 +9,23 @@ import {
   normalizeReviewDecision,
   isAutoMergeEnabled,
   deriveWorkItemCheckSummary,
+  priorityFromLabels,
   type MainWorkItem
 } from './work-item-field-coercion'
-export function mapIssueWorkItem(item: Record<string, unknown>): MainWorkItem {
+export function mapIssueWorkItem(
+  item: Record<string, unknown>,
+  issueOwnerRepo: OwnerRepo | null = null
+): MainWorkItem {
+  const labels = Array.isArray(item.labels)
+    ? item.labels
+        .map((label) =>
+          typeof label === 'object' && label !== null && 'name' in label
+            ? String((label as { name?: unknown }).name ?? '')
+            : ''
+        )
+        .filter(Boolean)
+    : []
+  const priority = priorityFromLabels(labels)
   return {
     id: `issue:${String(item.number)}`,
     type: 'issue',
@@ -19,18 +33,20 @@ export function mapIssueWorkItem(item: Record<string, unknown>): MainWorkItem {
     title: String(item.title ?? ''),
     state: String(item.state ?? 'open') === 'closed' ? 'closed' : 'open',
     url: String(item.html_url ?? item.url ?? ''),
-    labels: Array.isArray(item.labels)
-      ? item.labels
-          .map((label) =>
-            typeof label === 'object' && label !== null && 'name' in label
-              ? String((label as { name?: unknown }).name ?? '')
-              : ''
-          )
-          .filter(Boolean)
-      : [],
+    labels,
+    ...(priority !== undefined ? { priority } : {}),
     updatedAt: String(item.updated_at ?? item.updatedAt ?? ''),
     ...authorFieldsFromUnknown(item),
-    ...(item.assignees !== undefined ? { assignees: usersFromUnknown(item.assignees) } : {})
+    ...(item.assignees !== undefined ? { assignees: usersFromUnknown(item.assignees) } : {}),
+    ...(issueOwnerRepo
+      ? {
+          issueRepo: {
+            owner: issueOwnerRepo.owner,
+            repo: issueOwnerRepo.repo,
+            ...(issueOwnerRepo.host ? { host: issueOwnerRepo.host } : {})
+          }
+        }
+      : {})
   }
 }
 
@@ -54,6 +70,16 @@ export function mapPullRequestWorkItem(
       (item.files as { totalCount?: unknown } | undefined)?.totalCount
   )
   const mergeable = normalizePRMergeable(item.mergeable)
+  const labels = Array.isArray(item.labels)
+    ? item.labels
+        .map((label) =>
+          typeof label === 'object' && label !== null && 'name' in label
+            ? String((label as { name?: unknown }).name ?? '')
+            : ''
+        )
+        .filter(Boolean)
+    : []
+  const priority = priorityFromLabels(labels)
   const headSha =
     typeof item.headRefOid === 'string'
       ? item.headRefOid
@@ -76,15 +102,8 @@ export function mapPullRequestWorkItem(
             ? 'draft'
             : 'open',
     url: String(item.html_url ?? item.url ?? ''),
-    labels: Array.isArray(item.labels)
-      ? item.labels
-          .map((label) =>
-            typeof label === 'object' && label !== null && 'name' in label
-              ? String((label as { name?: unknown }).name ?? '')
-              : ''
-          )
-          .filter(Boolean)
-      : [],
+    labels,
+    ...(priority !== undefined ? { priority } : {}),
     updatedAt: String(item.updated_at ?? item.updatedAt ?? ''),
     ...authorFieldsFromUnknown(item),
     branchName:

@@ -1460,6 +1460,8 @@ const api = {
       sourceContext?: TaskSourceContext | null
       number: number
       type?: 'issue' | 'pr'
+      issueRepo?: { owner: string; repo: string; host?: string }
+      prRepo?: { owner: string; repo: string; host?: string }
     }): Promise<unknown> => ipcRenderer.invoke('gh:workItemDetails', args),
 
     notifyWorkItemMutated: (args: {

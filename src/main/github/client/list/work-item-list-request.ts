@@ -105,6 +105,7 @@ export type PartialWorkItemsResult = {
   items: MainWorkItem[]
   issuesError?: ClassifiedError
   prsError?: ClassifiedError
+  dependenciesError?: ClassifiedError
 }
 
 export function assertSshRepoHasResolvedGitHubSource(args: {

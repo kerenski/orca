@@ -113,7 +113,6 @@ import {
   _resetOwnerRepoCache
 } from './client'
 import { GITHUB_WORK_ITEMS_QUERY_MAX_BYTES } from '../../shared/github/work-items-query-bounds'
-
 import { _resetOriginGitHubApiRepositoryCache } from './github-api-repository'
 
 // The origin-repository cache is module-level state; reset it so slugs
@@ -325,6 +324,7 @@ describe('listWorkItems', () => {
         labels: [],
         updatedAt: '2026-03-29T00:00:00Z',
         author: 'octocat',
+        issueRepo: { owner: 'acme', repo: 'widgets' },
         assignees: [
           {
             login: 'test-assignee',
@@ -754,7 +754,8 @@ describe('listWorkItems', () => {
         url: 'https://github.com/acme/widgets/issues/1',
         labels: [],
         updatedAt: '2026-03-31T00:00:00Z',
-        author: 'octocat'
+        author: 'octocat',
+        issueRepo: { owner: 'acme', repo: 'widgets' }
       }
     ])
   })

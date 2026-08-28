@@ -13,6 +13,20 @@ import type {
   ProviderCheckSummary
 } from './pull-request-types'
 
+export type { GitHubRepositoryIdentity } from './pull-request-types'
+
+export type GitHubWorkItemDependencyIdentity = {
+  type: GitHubWorkItem['type']
+  number: number
+  repo?: GitHubRepositoryIdentity
+  repoId?: string
+}
+
+export type GitHubWorkItemDependencyRelation = {
+  parent: GitHubWorkItemDependencyIdentity | string
+  child: GitHubWorkItemDependencyIdentity | string
+}
+
 export type GitHubWorkItem = {
   id: string
   type: 'issue' | 'pr'
@@ -21,6 +35,9 @@ export type GitHubWorkItem = {
   state: 'open' | 'closed' | 'merged' | 'draft'
   url: string
   labels: string[]
+  /** GitHub label-derived priority (P0 is highest); absent when no recognized label exists. */
+  priority?: number
+  milestone?: string | null
   updatedAt: string
   author: string | null
   // Why: GHE user logins don't exist on github.com, so the github.com/{login}.png
@@ -34,6 +51,7 @@ export type GitHubWorkItem = {
   // the cached check-runs endpoint instead of one `gh pr checks` call per row.
   headSha?: string
   prRepo?: GitHubRepositoryIdentity
+  issueRepo?: GitHubRepositoryIdentity
   additions?: number
   deletions?: number
   changedFiles?: number
@@ -58,6 +76,8 @@ export type GitHubWorkItem = {
    *  to know which repo an item came from. Stamped by the renderer fetcher
    *  (`fetchWorkItems`) and by optimistic stubs on the new-issue path. */
   repoId: string
+  /** Relations are omitted when the dependency endpoints are unavailable. */
+  dependencyRelations?: GitHubWorkItemDependencyRelation[]
 }
 
 export type GitHubWorkItemDetails = {
@@ -117,6 +137,7 @@ export type ListWorkItemsResult<T> = {
   errors?: {
     issues?: ClassifiedError
     prs?: ClassifiedError
+    dependencies?: ClassifiedError
   }
   /** True when the user's per-repo preference was `'upstream'` but no upstream
    *  remote is configured, so the resolver fell back to origin. Renderer uses

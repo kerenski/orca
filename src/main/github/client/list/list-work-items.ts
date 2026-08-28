@@ -62,10 +62,11 @@ export async function listWorkItems(
         )
 
     const errors =
-      partial.issuesError || partial.prsError
+      partial.issuesError || partial.prsError || partial.dependenciesError
         ? {
             ...(partial.issuesError ? { issues: partial.issuesError } : {}),
-            ...(partial.prsError ? { prs: partial.prsError } : {})
+            ...(partial.prsError ? { prs: partial.prsError } : {}),
+            ...(partial.dependenciesError ? { dependencies: partial.dependenciesError } : {})
           }
         : undefined
     return {

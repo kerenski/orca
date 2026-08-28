@@ -11,7 +11,11 @@ import type {
   GitHubPRFileContents,
   GitHubPRFileViewedState
 } from '../../shared/github/pull-request-types'
-import type { GitHubWorkItem, GitHubWorkItemDetails } from '../../shared/github/work-item-types'
+import type {
+  GitHubRepositoryIdentity,
+  GitHubWorkItem,
+  GitHubWorkItemDetails
+} from '../../shared/github/work-item-types'
 import type { IssueSourcePreference } from '../../shared/repo-types'
 import {
   ghExecFileAsync,
@@ -1050,7 +1054,9 @@ export async function getWorkItemDetails(
   type?: 'issue' | 'pr',
   connectionId?: string | null,
   localGitOptions: LocalGitExecOptions = {},
-  preference?: IssueSourcePreference
+  preference?: IssueSourcePreference,
+  issueRepo?: GitHubRepositoryIdentity,
+  prRepo?: GitHubRepositoryIdentity
 ): Promise<GitHubWorkItemDetails | null> {
   const item: Omit<GitHubWorkItem, 'repoId'> | null = await getWorkItem(
     repoPath,
@@ -1064,11 +1070,39 @@ export async function getWorkItemDetails(
     return null
   }
 
-  const resolvedRepository =
-    item.type === 'issue'
-      ? await getIssueGitHubApiRepository(repoPath, connectionId, localGitOptions)
+  let resolvedRepository: GitHubApiRepository | null
+  if (item.type === 'issue') {
+    if (
+      issueRepo &&
+      item.issueRepo &&
+      (issueRepo.owner !== item.issueRepo.owner ||
+        issueRepo.repo !== item.issueRepo.repo ||
+        issueRepo.host !== item.issueRepo.host)
+    ) {
+      throw new Error(
+        `Issue #${number} repository identity mismatch: requested ${issueRepo.owner}/${issueRepo.repo} but item resolved to ${item.issueRepo.owner}/${item.issueRepo.repo}. Refusing cross-repository details fetch.`
+      )
+    }
+    resolvedRepository =
+      issueRepo ??
+      (await getIssueGitHubApiRepository(repoPath, connectionId, localGitOptions, preference))
+  } else {
+    if (
+      prRepo &&
+      item.prRepo &&
+      (prRepo.owner !== item.prRepo.owner ||
+        prRepo.repo !== item.prRepo.repo ||
+        prRepo.host !== item.prRepo.host)
+    ) {
+      throw new Error(
+        `PR #${number} repository identity mismatch: requested ${prRepo.owner}/${prRepo.repo} but item resolved to ${item.prRepo.owner}/${item.prRepo.repo}. Refusing cross-repository details fetch.`
+      )
+    }
+    resolvedRepository = prRepo
+      ? prRepo
       : (await resolveGitHubRepoExecution(repoPath, item.prRepo, connectionId, localGitOptions))
           .ownerRepo
+  }
 
   if (item.type === 'issue') {
     return withWorkItemDetailsPermit(async () => {

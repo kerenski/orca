@@ -1,6 +1,7 @@
 import { defineMethod, type RpcMethod } from '../core'
 import { z } from 'zod'
 import { SkillDiscoveryTargetSchema } from '../../../../shared/skills'
+import { CardStartRequestSchema } from '../../../../shared/card-start-contract'
 import {
   SkillInstallPreviewRequestSchema,
   SkillInstallRequestSchema,
@@ -54,6 +55,11 @@ export const SKILL_METHODS: RpcMethod[] = [
         refresh: params.refresh === true
       })
     }
+  }),
+  defineMethod({
+    name: 'skills.startCard',
+    params: CardStartRequestSchema,
+    handler: (params, { runtime }) => runtime.startCard(params)
   }),
   defineMethod({
     name: 'skills.share',
