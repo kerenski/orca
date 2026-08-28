@@ -211,6 +211,7 @@ type GitHubWorkItemsListArgs = {
   query?: string
   page?: number
   noCache?: true
+  includeDependencies?: boolean
 }
 
 function settingsForGitHubRepoOwner(
@@ -632,6 +633,7 @@ type FetchOptions = {
   noCache?: boolean
   requireComplete?: boolean
   allowStaleFallback?: boolean
+  includeDependencies?: boolean
   sourceContext?: TaskSourceContext | null
 }
 
@@ -2716,12 +2718,23 @@ export const createGitHubSlice: StateCreator<AppState, [], [], GitHubSlice> = (s
         const envelope = await listGitHubWorkItemsForRepo(requestContext, {
           limit,
           query: query || undefined,
-          ...(options?.noCache ? { noCache: true } : {})
+          ...(options?.noCache ? { noCache: true } : {}),
+          ...(options?.includeDependencies !== undefined
+            ? { includeDependencies: options.includeDependencies }
+            : {})
         })
         // Why: stamp repoId at the fetch boundary so downstream consumers can rely on it — main doesn't know Orca's Repo.id.
         const items: GitHubWorkItem[] = envelope.items.map((item) => ({ ...item, repoId }))
         if (options?.requireComplete && (envelope.errors?.issues || envelope.errors?.prs)) {
           throw new Error('GitHub work-item fetch returned a partial result.')
+        }
+        // Why: dependency lookups are an enhancement to the list; keep the fetched
+        // work items usable when GitHub returns a partial dependency response.
+        if (options?.includeDependencies && envelope.errors?.dependencies) {
+          console.warn(
+            '[workItems] dependency lookup partially failed:',
+            envelope.errors.dependencies
+          )
         }
         // Why: only surface issues-side errors here; PR-side failures predate the issue-source split (#1076) and are out of scope for this banner (design doc §2).
         const issuesError = envelope.errors?.issues
@@ -2837,6 +2850,9 @@ export const createGitHubSlice: StateCreator<AppState, [], [], GitHubSlice> = (s
             sourceContext: r.sourceContext ?? options?.sourceContext
           })
         } catch (err) {
+          if (options?.includeDependencies) {
+            throw err
+          }
           // Why: fall back to any cache entry (stale or not) before declaring this repo failed; only count as failed when it has nothing to contribute.
           // Why: use perRepoLimit (not displayLimit) so the cache key matches what fetchWorkItems wrote.
           if (isGitHubWorkItemsSshRemoteRequiredError(err)) {

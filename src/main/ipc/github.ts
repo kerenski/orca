@@ -439,6 +439,7 @@ export function registerGitHubHandlers(store: Store, stats: StatsCollector): voi
         query?: string
         page?: number
         noCache?: boolean
+        includeDependencies?: boolean
       }
     ) => {
       const repo = assertRegisteredRepo(args, store)
@@ -450,7 +451,8 @@ export function registerGitHubHandlers(store: Store, stats: StatsCollector): voi
         repo.issueSourcePreference,
         repoConnectionId(repo),
         args.noCache,
-        ...localGitOptionArgs(store, repo)
+        ...localGitOptionArgs(store, repo),
+        args.includeDependencies
       )
     }
   )

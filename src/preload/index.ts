@@ -1510,6 +1510,7 @@ const api = {
       query?: string
       page?: number
       noCache?: boolean
+      includeDependencies?: boolean
     }): Promise<ListWorkItemsResult<Omit<GitHubWorkItem, 'repoId'>>> =>
       ipcRenderer.invoke('gh:listWorkItems', args),
 

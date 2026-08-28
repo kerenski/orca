@@ -18,12 +18,16 @@ vi.mock('./github-api-repository', () => ({
     ownerRepo.host ? { host: ownerRepo.host } : {}
 }))
 
-import { fetchIssueDependencies } from './client/list/work-item-dependencies'
+import {
+  _resetIssueDependencyCacheForTests,
+  fetchIssueDependencies
+} from './client/list/work-item-dependencies'
 import { mapIssueWorkItem } from './client/map/work-item'
 
 describe('GitHub issue dependencies', () => {
   beforeEach(() => {
     ghExecFileAsyncMock.mockReset()
+    _resetIssueDependencyCacheForTests()
     acquireMock.mockReset()
     releaseMock.mockReset()
     acquireMock.mockResolvedValue(undefined)
@@ -102,6 +106,27 @@ describe('GitHub issue dependencies', () => {
         }
       }
     ])
+  })
+
+  it('uses the bounded cache and bypasses it with noCache', async () => {
+    ghExecFileAsyncMock.mockResolvedValue({ stdout: '[]' })
+    const issue = {
+      id: 'issue:5',
+      type: 'issue' as const,
+      number: 5,
+      title: 'Issue',
+      state: 'open' as const,
+      url: '',
+      labels: [],
+      updatedAt: '2026-08-29T00:00:00Z',
+      author: null
+    }
+    const repo = { owner: 'acme', repo: 'widgets' }
+    await fetchIssueDependencies([issue], repo)
+    await fetchIssueDependencies([issue], repo)
+    expect(ghExecFileAsyncMock).toHaveBeenCalledTimes(2)
+    await fetchIssueDependencies([issue], repo, {}, { noCache: true })
+    expect(ghExecFileAsyncMock).toHaveBeenCalledTimes(4)
   })
 
   it('keeps successful relations when one dependency direction fails', async () => {

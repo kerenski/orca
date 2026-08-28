@@ -6305,6 +6305,8 @@ export default function CardPage(): React.JSX.Element {
   const [focusedGithubDependencyIdentity, setFocusedGithubDependencyIdentity] = useState<
     string | null
   >(null)
+  const [githubDependenciesLoading, setGithubDependenciesLoading] = useState(false)
+  const [githubDependenciesError, setGithubDependenciesError] = useState<string | null>(null)
   const showGitHubTaskSkeletons = tasksFiltering || (tasksLoading && filteredWorkItems.length === 0)
   const loadedGitHubAuthorLogins = useMemo(() => {
     const seen = new Set<string>()
@@ -6730,8 +6732,11 @@ export default function CardPage(): React.JSX.Element {
 
     // Why: snapshot retrying keys at dispatch so an earlier settling effect doesn't wipe a newer retry's pending source.
     const dispatchedRetrySourceKeys = retryingSourceKeys
+    setGithubDependenciesLoading(true)
+    setGithubDependenciesError(null)
     void fetchWorkItemsAcrossRepos(repoArgs, githubPerRepoPageLimit, githubPageSize, q, {
       ...deriveTaskPageGitHubWorkItemsFetchOptions(forcedFetch, shouldProbeOnLanding),
+      includeDependencies: false,
       ...(forcedFetch ? { requireComplete: true } : {})
     })
       .then(
@@ -6820,6 +6825,36 @@ export default function CardPage(): React.JSX.Element {
           }
           setTasksRefreshing(false)
           setTasksFiltering(false)
+          void fetchWorkItemsAcrossRepos(repoArgs, githubPerRepoPageLimit, githubPageSize, q, {
+            force: true,
+            includeDependencies: true,
+            sourceContext: undefined
+          })
+            .then(({ items: hydratedItems }) => {
+              if (!cancelled) {
+                setGithubDependenciesLoading(false)
+              }
+              if (cancelled || hydratedItems.length === 0) {
+                return
+              }
+              const hydratedByKey = new Map(
+                hydratedItems.map((item) => [`${item.repoId}\0${item.id}`, item])
+              )
+              setPages((current) =>
+                current.map(
+                  (page) =>
+                    page?.map((item) => hydratedByKey.get(`${item.repoId}\0${item.id}`) ?? item) ??
+                    null
+                )
+              )
+            })
+            .catch((error) => {
+              if (!cancelled) {
+                setGithubDependenciesLoading(false)
+                setGithubDependenciesError(error instanceof Error ? error.message : String(error))
+                console.warn('Failed to load GitHub issue dependencies:', error)
+              }
+            })
         }
       )
       .catch((err) => {
@@ -6838,6 +6873,7 @@ export default function CardPage(): React.JSX.Element {
         if (cancelled) {
           return
         }
+        setGithubDependenciesLoading(false)
         setTasksError(err instanceof Error ? err.message : 'Failed to load GitHub work.')
         setFailedCount(0) // the per-repo banner would be misleading next to tasksError
         setGithubUnavailable(false)
@@ -10256,6 +10292,22 @@ export default function CardPage(): React.JSX.Element {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {githubEmptyState.description}
                     </p>
+                  </div>
+                ) : null}
+
+                {githubDependenciesLoading || githubDependenciesError ? (
+                  <div
+                    role={githubDependenciesError ? 'alert' : 'status'}
+                    className={cn(
+                      'border-b px-3 py-2 text-[11px]',
+                      githubDependenciesError
+                        ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-200'
+                        : 'border-border/60 bg-muted/30 text-muted-foreground'
+                    )}
+                  >
+                    {githubDependenciesError
+                      ? `依赖加载失败，已保留平铺卡片：${githubDependenciesError}`
+                      : '正在补充 GitHub 依赖关系…'}
                   </div>
                 ) : null}
 

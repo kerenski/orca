@@ -30,7 +30,8 @@ export async function listRecentWorkItems(
   page: number,
   connectionId?: string | null,
   noCache?: boolean,
-  localGitOptions: LocalGitExecOptions = {}
+  localGitOptions: LocalGitExecOptions = {},
+  includeDependencies = true
 ): Promise<PartialWorkItemsResult> {
   const ghOptions = ghRepoExecOptions(githubRepoContext(repoPath, connectionId, localGitOptions))
   assertSshRepoHasResolvedGitHubSource({ connectionId, issueOwnerRepo, prOwnerRepo })
@@ -93,11 +94,16 @@ export async function listRecentWorkItems(
         : String(issuesSettled.reason)
     issuesError = classifyListIssuesError(stderr)
   }
-  if (issues.length > 0 && issueOwnerRepo) {
-    const dependencies = await fetchIssueDependencies(issues, issueOwnerRepo, {
-      ...ghOptions,
-      ...githubHostExecOptions(issueOwnerRepo)
-    })
+  if (includeDependencies && issues.length > 0 && issueOwnerRepo) {
+    const dependencies = await fetchIssueDependencies(
+      issues,
+      issueOwnerRepo,
+      {
+        ...ghOptions,
+        ...githubHostExecOptions(issueOwnerRepo)
+      },
+      { noCache, cacheScope: connectionId }
+    )
     issues = dependencies.items
     dependenciesError = dependencies.error
   }
@@ -141,7 +147,9 @@ export async function listQueriedWorkItems(
   limit: number,
   page?: number,
   connectionId?: string | null,
-  localGitOptions: LocalGitExecOptions = {}
+  localGitOptions: LocalGitExecOptions = {},
+  noCache?: boolean,
+  includeDependencies = true
 ): Promise<PartialWorkItemsResult> {
   const ghOptions = ghRepoExecOptions(githubRepoContext(repoPath, connectionId, localGitOptions))
   assertSshRepoHasResolvedGitHubSource({ connectionId, issueOwnerRepo, prOwnerRepo })
@@ -172,6 +180,9 @@ export async function listQueriedWorkItems(
       query,
       page: page ?? 1
     })
+    if (noCache) {
+      request.args.splice(1, 2)
+    }
     try {
       const { stdout } = await ghExecFileAsync(request.args, {
         ...ghOptions,
@@ -180,10 +191,17 @@ export async function listQueriedWorkItems(
       let items = (JSON.parse(stdout) as Record<string, unknown>[])
         .filter((item) => !('pull_request' in item))
         .map((item) => mapIssueWorkItem(item, issueOwnerRepo))
-      const dependencies = await fetchIssueDependencies(items, issueOwnerRepo, {
-        ...ghOptions,
-        ...githubHostExecOptions(issueOwnerRepo)
-      })
+      const dependencies = includeDependencies
+        ? await fetchIssueDependencies(
+            items,
+            issueOwnerRepo,
+            {
+              ...ghOptions,
+              ...githubHostExecOptions(issueOwnerRepo)
+            },
+            { noCache, cacheScope: connectionId }
+          )
+        : { items }
       items = dependencies.items
       successfulRequestCount += 1
       return {

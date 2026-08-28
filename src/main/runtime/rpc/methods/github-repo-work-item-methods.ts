@@ -7,7 +7,8 @@ const WorkItemsList = RepoSelector.extend({
   limit: OptionalFiniteNumber,
   query: OptionalString,
   page: z.number().int().positive().optional(),
-  noCache: z.boolean().optional()
+  noCache: z.boolean().optional(),
+  includeDependencies: z.boolean().optional()
 })
 
 const IssuesList = RepoSelector.extend({
@@ -64,7 +65,8 @@ export const GITHUB_REPO_WORK_ITEM_METHODS: RpcMethod[] = [
         params.limit,
         params.query,
         params.page,
-        params.noCache
+        params.noCache,
+        ...(params.includeDependencies === undefined ? [] : [params.includeDependencies])
       )
   }),
   defineMethod({

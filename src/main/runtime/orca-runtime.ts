@@ -21802,7 +21802,8 @@ export class OrcaRuntimeService {
     limit?: number,
     query?: string,
     page?: number,
-    noCache?: boolean
+    noCache?: boolean,
+    includeDependencies?: boolean
   ): Promise<ListWorkItemsResult<MainWorkItem>> {
     const repo = await this.resolveRepoSelector(repoSelector)
     return listWorkItems(
@@ -21813,7 +21814,8 @@ export class OrcaRuntimeService {
       repo.issueSourcePreference,
       repo.connectionId ?? null,
       noCache,
-      ...this.getLocalGitExecutionOptionArgs(repo)
+      ...this.getLocalGitExecutionOptionArgs(repo),
+      includeDependencies
     )
   }
 
