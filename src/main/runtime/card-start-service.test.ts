@@ -115,25 +115,4 @@ describe('startCardOnRuntimeHost', () => {
     expect(ghExecFileAsync).not.toHaveBeenCalled()
     expect(execFileMock).not.toHaveBeenCalled()
   })
-
-  it('rejects pull requests without commenting or starting a card', async () => {
-    vi.mocked(ghExecFileAsync).mockImplementationOnce(async () => ({
-      stdout: JSON.stringify({
-        title: 'M1-04 implement dependency graph',
-        body: '',
-        isPullRequest: true
-      }),
-      stderr: ''
-    }))
-    execFileMock.mockClear()
-
-    const result = await startCardOnRuntimeHost(
-      { issue: 64, card: 'm1-04', tier: 'medium', repoId: 'repo-1' },
-      repo()
-    )
-
-    expect(result).toMatchObject({ ok: false, error: { code: 'card_start_issue_mismatch' } })
-    expect(ghExecFileAsync).toHaveBeenCalledOnce()
-    expect(execFileMock).not.toHaveBeenCalled()
-  })
 })

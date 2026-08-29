@@ -61,18 +61,10 @@ async function runSopPrelude(
     host: ownerRepo.host
   }
   const repository = `${ownerRepo.owner}/${ownerRepo.repo}`
-  let issue: { title?: string; body?: string; isPullRequest?: boolean }
+  let issue: { title?: string; body?: string }
   try {
     const viewed = await ghExecFileAsync(
-      [
-        'issue',
-        'view',
-        String(request.issue),
-        '--json',
-        'title,body,isPullRequest',
-        '-R',
-        repository
-      ],
+      ['issue', 'view', String(request.issue), '--json', 'title,body', '-R', repository],
       { ...ghOptions, idempotent: true }
     )
     issue = JSON.parse(viewed.stdout) as typeof issue
@@ -81,9 +73,6 @@ async function runSopPrelude(
       'card_start_failed',
       error instanceof Error ? error.message : 'gh issue view failed'
     )
-  }
-  if (issue.isPullRequest) {
-    return failure('card_start_issue_mismatch', '开卡仅支持 GitHub issue，不支持 pull request')
   }
   if (!issue.title) {
     return failure('card_start_issue_mismatch', `issue #${request.issue} 没有标题，已停止开卡`)
