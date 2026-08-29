@@ -8,6 +8,7 @@ import {
   type SkillDeleteRequestDependencies
 } from '../../../skills/skill-delete/request-service'
 import { SkillDiscoveryTargetSchema } from '../../../../shared/skills'
+import { CardStartRequestSchema } from '../../../../shared/card-start-contract'
 import {
   SkillInstallPreviewRequestSchema,
   SkillInstallRequestSchema,
@@ -83,6 +84,11 @@ export const SKILL_METHODS: RpcMethod[] = [
         resolveDiscoveryTarget(params.target ?? {}, runtime),
         skillDeleteDependencies(runtime)
       )
+  }),
+  defineMethod({
+    name: 'skills.startCard',
+    params: CardStartRequestSchema,
+    handler: (params, { runtime }) => runtime.startCard(params)
   }),
   defineMethod({
     name: 'skills.delete',

@@ -16,6 +16,7 @@ import { githubPRStackExecutionScope } from './../github-exec-scope'
 import { hydrateWorkItemRepositoryMergeMetadata } from './../detect/hydrate-work-item-merge-metadata'
 import type { MainWorkItem } from './../map/work-item-field-coercion'
 import { mapIssueWorkItem, mapPullRequestWorkItem } from './../map/work-item'
+import { fetchIssueDependencies } from './work-item-dependencies'
 import {
   buildWorkItemListRequest,
   assertSshRepoHasResolvedGitHubSource,
@@ -29,7 +30,8 @@ export async function listRecentWorkItems(
   page: number,
   connectionId?: string | null,
   noCache?: boolean,
-  localGitOptions: LocalGitExecOptions = {}
+  localGitOptions: LocalGitExecOptions = {},
+  includeDependencies = true
 ): Promise<PartialWorkItemsResult> {
   const ghOptions = ghRepoExecOptions(githubRepoContext(repoPath, connectionId, localGitOptions))
   assertSshRepoHasResolvedGitHubSource({ connectionId, issueOwnerRepo, prOwnerRepo })
@@ -74,12 +76,13 @@ export async function listRecentWorkItems(
 
   let issues: MainWorkItem[] = []
   let issuesError: ClassifiedError | undefined
+  let dependenciesError: ClassifiedError | undefined
   if (issuesSettled.status === 'fulfilled') {
     try {
       issues = (JSON.parse(issuesSettled.value.stdout) as Record<string, unknown>[])
         // Why: search/issues can still return PRs (pull_request marker) even with is:issue; filter them out.
         .filter((item) => !('pull_request' in item))
-        .map(mapIssueWorkItem)
+        .map((item) => mapIssueWorkItem(item, issueOwnerRepo))
     } catch (err) {
       // Why: a malformed issue payload must not discard the successfully fetched PR half.
       issuesError = classifyListIssuesError(err instanceof Error ? err.message : String(err))
@@ -90,6 +93,19 @@ export async function listRecentWorkItems(
         ? issuesSettled.reason.message
         : String(issuesSettled.reason)
     issuesError = classifyListIssuesError(stderr)
+  }
+  if (includeDependencies && issues.length > 0 && issueOwnerRepo) {
+    const dependencies = await fetchIssueDependencies(
+      issues,
+      issueOwnerRepo,
+      {
+        ...ghOptions,
+        ...githubHostExecOptions(issueOwnerRepo)
+      },
+      { noCache, cacheScope: connectionId }
+    )
+    issues = dependencies.items
+    dependenciesError = dependencies.error
   }
 
   let prs: MainWorkItem[] = []
@@ -118,7 +134,8 @@ export async function listRecentWorkItems(
 
   return {
     items: sortWorkItemsByNumber([...issues, ...prs]).slice(0, limit),
-    issuesError
+    issuesError,
+    ...(dependenciesError ? { dependenciesError } : {})
   }
 }
 
@@ -130,7 +147,9 @@ export async function listQueriedWorkItems(
   limit: number,
   page?: number,
   connectionId?: string | null,
-  localGitOptions: LocalGitExecOptions = {}
+  localGitOptions: LocalGitExecOptions = {},
+  noCache?: boolean,
+  includeDependencies = true
 ): Promise<PartialWorkItemsResult> {
   const ghOptions = ghRepoExecOptions(githubRepoContext(repoPath, connectionId, localGitOptions))
   assertSshRepoHasResolvedGitHubSource({ connectionId, issueOwnerRepo, prOwnerRepo })
@@ -161,16 +180,34 @@ export async function listQueriedWorkItems(
       query,
       page: page ?? 1
     })
+    if (noCache) {
+      request.args.splice(1, 2)
+    }
     try {
       const { stdout } = await ghExecFileAsync(request.args, {
         ...ghOptions,
         ...githubHostExecOptions(issueOwnerRepo)
       })
-      const items = (JSON.parse(stdout) as Record<string, unknown>[])
+      let items = (JSON.parse(stdout) as Record<string, unknown>[])
         .filter((item) => !('pull_request' in item))
-        .map(mapIssueWorkItem)
+        .map((item) => mapIssueWorkItem(item, issueOwnerRepo))
+      const dependencies = includeDependencies
+        ? await fetchIssueDependencies(
+            items,
+            issueOwnerRepo,
+            {
+              ...ghOptions,
+              ...githubHostExecOptions(issueOwnerRepo)
+            },
+            { noCache, cacheScope: connectionId }
+          )
+        : { items }
+      items = dependencies.items
       successfulRequestCount += 1
-      return { items }
+      return {
+        items,
+        ...(dependencies.error ? { dependenciesError: dependencies.error } : {})
+      }
     } catch (err) {
       const stderr = err instanceof Error ? err.message : String(err)
       if (classifyGitHubUnavailable(stderr)) {
@@ -236,6 +273,7 @@ export async function listQueriedWorkItems(
   return {
     items: sortWorkItemsByNumber([...issueResult.items, ...prItems]).slice(0, limit),
     issuesError: issueResult.issuesError,
-    prsError
+    prsError,
+    dependenciesError: issueResult.dependenciesError
   }
 }

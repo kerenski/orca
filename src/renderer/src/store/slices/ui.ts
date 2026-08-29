@@ -644,6 +644,8 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'cards'
+  previousViewBeforeCards: Exclude<TopLevelView, 'cards'>
   previousViewBeforeSettings:
     | 'terminal'
     | 'tasks'
@@ -653,6 +655,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'cards'
   previousViewBeforeActivity:
     | 'terminal'
     | 'settings'
@@ -662,6 +665,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'cards'
   previousViewBeforeAutomations:
     | 'terminal'
     | 'settings'
@@ -671,6 +675,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'cards'
   previousViewBeforeSpace:
     | 'terminal'
     | 'settings'
@@ -680,6 +685,7 @@ export type UISlice = {
     | 'skills'
     | 'artifacts'
     | 'mobile'
+    | 'cards'
   previousViewBeforeSkills:
     | 'terminal'
     | 'settings'
@@ -689,6 +695,7 @@ export type UISlice = {
     | 'space'
     | 'artifacts'
     | 'mobile'
+    | 'cards'
   previousViewBeforeMobile:
     | 'terminal'
     | 'settings'
@@ -697,6 +704,7 @@ export type UISlice = {
     | 'automations'
     | 'space'
     | 'skills'
+    | 'cards'
     | 'artifacts'
   previousViewBeforeArtifacts:
     | 'terminal'
@@ -707,6 +715,7 @@ export type UISlice = {
     | 'space'
     | 'skills'
     | 'mobile'
+    | 'cards'
   setActiveView: (view: UISlice['activeView']) => void
   taskPageData: {
     preselectedRepoId?: string
@@ -722,6 +731,7 @@ export type UISlice = {
     openJiraIssue?: JiraIssue
     openJiraSourceContext?: TaskSourceContext | null
   }
+  cardPageData: UISlice['taskPageData']
   taskResumeState: TaskResumeState | undefined
   setTaskResumeState: (updates: Partial<TaskResumeState>) => void
   taskListPosition: { contextKey: string; page: number; scrollTop: number } | null
@@ -769,6 +779,11 @@ export type UISlice = {
     options?: { recordTasksInteraction?: boolean }
   ) => void
   closeTaskPage: () => void
+  openCardPage: (
+    data?: UISlice['cardPageData'],
+    options?: { recordTasksInteraction?: boolean }
+  ) => void
+  closeCardPage: () => void
   openActivityPage: () => void
   closeActivityPage: () => void
   selectedAutomationId: string | null
@@ -839,6 +854,7 @@ export type UISlice = {
     | 'feature-wall'
     | 'feature-tips'
     | 'new-workspace-composer'
+    | 'card-start'
     | 'confirm-orca-yaml-hooks'
   modalData: Record<string, unknown>
   openModal: (modal: UISlice['activeModal'], data?: Record<string, unknown>) => void
@@ -1302,6 +1318,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   activeView: 'terminal',
   previousViewBeforeTasks: 'terminal',
+  previousViewBeforeCards: 'terminal',
   previousViewBeforeSettings: 'terminal',
   previousViewBeforeActivity: 'terminal',
   previousViewBeforeAutomations: 'terminal',
@@ -1313,6 +1330,7 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
   previousViewBeforeArtifacts: 'terminal',
   setActiveView: (view) => set({ activeView: view }),
   taskPageData: {},
+  cardPageData: {},
   taskResumeState: undefined,
   taskListPosition: null,
   githubTaskDrawerWorkItem: null,
@@ -1494,6 +1512,20 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
         worktreeNavHistoryIndex: nextHistoryIndex
       }
     }),
+  // Why: Cards is a Tasks-adjacent page clone; navigation state stays separate so the two pages never clobber each other.
+  openCardPage: (data = {}) => {
+    set((state) => ({
+      activeView: 'cards',
+      previousViewBeforeCards:
+        state.activeView === 'cards' ? state.previousViewBeforeCards : state.activeView,
+      cardPageData: data
+    }))
+  },
+  closeCardPage: () =>
+    set((state) => ({
+      activeView: state.previousViewBeforeCards,
+      cardPageData: {}
+    })),
   openActivityPage: () => {
     if (get().settings?.experimentalActivity !== true) {
       return

@@ -160,8 +160,12 @@ export async function getOriginGitHubApiRepository(
 export async function getIssueGitHubApiRepository(
   repoPath: string,
   connectionId?: string | null,
-  localGitOptions: LocalGitExecOptions = {}
+  localGitOptions: LocalGitExecOptions = {},
+  preference?: IssueSourcePreference
 ): Promise<GitHubApiRepository | null> {
+  if (preference === 'origin') {
+    return getGitHubApiRepositoryForRemote(repoPath, 'origin', connectionId, localGitOptions)
+  }
   const upstream = await getGitHubApiRepositoryForRemote(
     repoPath,
     'upstream',

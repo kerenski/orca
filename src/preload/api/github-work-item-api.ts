@@ -38,6 +38,7 @@ import type {
 import type {
   GitHubWorkItem,
   GitHubWorkItemDetails,
+  GitHubRepositoryIdentity,
   ListWorkItemsResult
 } from '../../shared/github/work-item-types'
 import type { GitHubCreateIssueResult, GitHubIssueUpdate } from '../../shared/issue-mutation-types'
@@ -75,6 +76,8 @@ export type GithubWorkItemApi = {
     args: GitHubRepoSelectorArgs & {
       number: number
       type?: 'issue' | 'pr'
+      issueRepo?: GitHubRepositoryIdentity
+      prRepo?: GitHubRepositoryIdentity
     }
   ) => Promise<GitHubWorkItemDetails | null>
   notifyWorkItemMutated: (args: {

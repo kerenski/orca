@@ -9,6 +9,11 @@ import {
 } from '../../../shared/skill-install-capability'
 import type { SkillDiscoveryResult, SkillDiscoveryTarget } from '../../../shared/skills'
 import {
+  CardStartResultSchema,
+  type CardStartRequest,
+  type CardStartResult
+} from '../../../shared/card-start-contract'
+import {
   assertRuntimeEnvironmentCapability,
   callRuntimeRpc,
   runtimeEnvironmentSupportsCapability,
@@ -119,4 +124,14 @@ export async function deleteSkillsOnRuntimeTarget(
   return callRuntimeRpc<SkillDeleteResult>(runtimeTarget, 'skills.delete', request, {
     timeoutMs: SKILL_DELETE_TIMEOUT_MS
   })
+}
+
+export async function startCardForRuntimeTarget(
+  runtimeTarget: RuntimeClientTarget,
+  request: CardStartRequest
+): Promise<CardStartResult> {
+  const raw = await callRuntimeRpc<unknown>(runtimeTarget, 'skills.startCard', request, {
+    timeoutMs: 120_000
+  })
+  return CardStartResultSchema.parse(raw)
 }

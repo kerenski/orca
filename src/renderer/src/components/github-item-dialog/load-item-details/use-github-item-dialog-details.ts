@@ -72,7 +72,15 @@ export function useGitHubItemDialogDetails({
       sourceCacheScope:
         sourceContext?.provider === 'github' ? getTaskSourceCacheScope(sourceContext) : null,
       type: workItem.type,
-      number: workItem.number
+      number: workItem.number,
+      ownerRepo:
+        workItem.type === 'issue'
+          ? workItem.issueRepo
+            ? `${workItem.issueRepo.owner}/${workItem.issueRepo.repo}`
+            : undefined
+          : workItem.prRepo
+            ? `${workItem.prRepo.owner}/${workItem.prRepo.repo}`
+            : undefined
     })
   }, [
     canUseDetailsRepoContext,
@@ -178,7 +186,9 @@ export function useGitHubItemDialogDetails({
         repoId: effectiveRepoId,
         sourceContext,
         number: workItem.number,
-        type: workItem.type
+        type: workItem.type,
+        issueRepo: workItem.issueRepo,
+        prRepo: workItem.prRepo
       })
 
     // Why: snapshot the invalidation generation; if it advances before resolve, a mid-flight mutation invalidated the entry — don't write back.

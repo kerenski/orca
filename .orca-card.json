@@ -1,0 +1,6 @@
+{
+  "_comment": "orca-skill 可选本地检查配置（run-checks.sh 层 1，优先于栈探测）。流程不强制执行本地三闸，代码质量由 draft PR 触发的 GitHub PR CI 负责。check_cmd 为手动全量检查链，check_cmd_fast 为手动增量检查链。格式：每行 'name:command'。",
+  "check_cmd": "typecheck:pnpm run typecheck\nlint:pnpm run lint\ntest:pnpm run test",
+  "check_cmd_fast": "typecheck:pnpm run typecheck\nlint:pnpm run check:code-quality:changed",
+  "redline_doc": ""
+}

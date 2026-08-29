@@ -15,7 +15,8 @@ export async function listWorkItems(
   preference?: IssueSourcePreference,
   connectionId?: string | null,
   noCache?: boolean,
-  localGitOptions: LocalGitExecOptions = {}
+  localGitOptions: LocalGitExecOptions = {},
+  includeDependencies = true
 ): Promise<ListWorkItemsResult<MainWorkItem>> {
   const trimmedQuery = query?.trim() ?? ''
   const requestedPage = normalizeWorkItemPage(page)
@@ -48,7 +49,8 @@ export async function listWorkItems(
           requestedPage,
           connectionId,
           noCache,
-          localGitOptions
+          localGitOptions,
+          includeDependencies
         )
       : await listQueriedWorkItems(
           repoPath,
@@ -58,14 +60,17 @@ export async function listWorkItems(
           limit,
           requestedPage,
           connectionId,
-          localGitOptions
+          localGitOptions,
+          noCache,
+          includeDependencies
         )
 
     const errors =
-      partial.issuesError || partial.prsError
+      partial.issuesError || partial.prsError || partial.dependenciesError
         ? {
             ...(partial.issuesError ? { issues: partial.issuesError } : {}),
-            ...(partial.prsError ? { prs: partial.prsError } : {})
+            ...(partial.prsError ? { prs: partial.prsError } : {}),
+            ...(partial.dependenciesError ? { dependencies: partial.dependenciesError } : {})
           }
         : undefined
     return {

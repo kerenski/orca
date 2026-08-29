@@ -110,6 +110,7 @@ export type TopLevelView =
   | 'terminal'
   | 'settings'
   | 'tasks'
+  | 'cards'
   | 'activity'
   | 'automations'
   | 'space'

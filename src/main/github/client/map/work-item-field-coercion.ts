@@ -20,6 +20,11 @@ export const WORK_ITEM_PR_DETAIL_JSON_FIELDS =
  * Derive author login + avatar_url together so GHE avatars render — the login-only
  * `{login}.png` URL 404s on GHE. REST uses `user.avatar_url`, gh/GraphQL `author.avatarUrl` (#8784).
  */
+export function priorityFromLabels(labels: string[]): number | undefined {
+  const priorityLabel = labels.find((label) => /^P[0-3]$/i.test(label.trim()))
+  return priorityLabel ? Number(priorityLabel.trim().slice(1)) : undefined
+}
+
 export function authorFieldsFromUnknown(
   item: Record<string, unknown>
 ): Pick<MainWorkItem, 'author' | 'authorAvatarUrl'> {

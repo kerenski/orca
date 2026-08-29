@@ -1505,6 +1505,8 @@ const api = {
       sourceContext?: TaskSourceContext | null
       number: number
       type?: 'issue' | 'pr'
+      issueRepo?: { owner: string; repo: string; host?: string }
+      prRepo?: { owner: string; repo: string; host?: string }
     }): Promise<unknown> => ipcRenderer.invoke('gh:workItemDetails', args),
 
     notifyWorkItemMutated: (args: {
@@ -1553,6 +1555,7 @@ const api = {
       query?: string
       page?: number
       noCache?: boolean
+      includeDependencies?: boolean
     }): Promise<ListWorkItemsResult<Omit<GitHubWorkItem, 'repoId'>>> =>
       ipcRenderer.invoke('gh:listWorkItems', args),
 

@@ -14,6 +14,8 @@ import {
 import { extractOscTitleScanTail } from '../../shared/osc-title-scan-tail'
 import { planWorktreeSortOrderUpdates } from '../../shared/worktree/sort-order-update'
 import { isArtifactSharingEnabled } from '../../shared/artifact-sharing-gate'
+import { startCardOnRuntimeHost } from './card-start-service'
+import type { CardStartRequest, CardStartResult } from '../../shared/card-start-contract'
 import {
   assertAgentSkillSharingAllowed,
   isAgentSkillSharingEnabled
@@ -5341,6 +5343,23 @@ export class OrcaRuntimeService {
   /** Renderer-owned; read here because dispatch enforcement lives in main. */
   getNestedWorkerMaxDepth(): number {
     return resolveNestedWorkerMaxDepth(this.store?.getSettings())
+  }
+
+  async startCard(request: CardStartRequest): Promise<CardStartResult> {
+    const repo = this.listRepos().find((candidate) => candidate.id === request.repoId)
+    if (!repo) {
+      return {
+        schemaVersion: 1,
+        ok: false,
+        exitCode: 3,
+        error: {
+          code: 'card_start_repo_not_found',
+          message: `目标 runtime 未找到仓库 ${request.repoId}`,
+          retryable: false
+        }
+      }
+    }
+    return startCardOnRuntimeHost(request, repo)
   }
 
   async publishDiscoveredSkillsFromAgent(
@@ -22752,7 +22771,8 @@ export class OrcaRuntimeService {
     limit?: number,
     query?: string,
     page?: number,
-    noCache?: boolean
+    noCache?: boolean,
+    includeDependencies?: boolean
   ): Promise<ListWorkItemsResult<MainWorkItem>> {
     const repo = await this.resolveRepoSelector(repoSelector)
     return listWorkItems(
@@ -22763,7 +22783,8 @@ export class OrcaRuntimeService {
       repo.issueSourcePreference,
       repo.connectionId ?? null,
       noCache,
-      ...this.getLocalGitExecutionOptionArgs(repo)
+      ...this.getLocalGitExecutionOptionArgs(repo),
+      includeDependencies
     )
   }
 
