@@ -10,6 +10,9 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/_lib.sh"
+
 ISSUE=""
 CARD=""
 WORKER_AGENT=""
@@ -30,10 +33,7 @@ if [[ ! "$ISSUE" =~ ^[0-9]+$ ]] || [[ ! "$CARD" =~ ^[a-z0-9-]+$ ]] || [ -z "$WOR
   exit 1
 fi
 
-command -v orca >/dev/null 2>&1 || { echo "ERROR: 缺少依赖 orca" >&2; exit 1; }
-command -v jq   >/dev/null 2>&1 || { echo "ERROR: 缺少依赖 jq" >&2; exit 1; }
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+require_deps orca jq || exit 1
 
 # ---- 状态目录（Phase 2b 迁移）：handle/seq 统一在 /tmp/<card>/ 下，与 card-state.md 同处，收尾 rm -rf 一次清干净 ----
 STATE_DIR="/tmp/${CARD}"
@@ -54,8 +54,7 @@ HANDLE_FILE=$(effective_handle_file)
 
 if [ "$FORCE" -eq 0 ] && [ -f "$HANDLE_FILE" ]; then
   SAVED=$(cat "$HANDLE_FILE")
-  if orca terminal list --json 2>/dev/null | jq -e --arg h "$SAVED" \
-      '.result.terminals[]? | select(.handle == $h)' >/dev/null 2>&1; then
+  if worker_alive "$SAVED"; then
     echo "$SAVED" > "${STATE_DIR}/worker.handle"   # 旧路径读到则迁移落盘新路径
     echo "WORKER_READY:${SAVED}（复用已记录 worker，handle 文件 ${STATE_DIR}/worker.handle）"
     exit 0

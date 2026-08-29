@@ -146,16 +146,14 @@ for override in "$CTRL_CMD_OVERRIDE" "$WORKER_OVERRIDE"; do
   fi
 done
 
-if ! command -v jq >/dev/null 2>&1; then
-  emit_failure 1 "dependency_missing" "Missing required dependency: jq" false "dependency" "jq"
-fi
-for dep in orca gh git; do
+for dep in jq orca gh git; do
   if ! command -v "$dep" >/dev/null 2>&1; then
     emit_failure 1 "dependency_missing" "Missing required dependency: ${dep}" false "dependency" "$dep"
   fi
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/_lib.sh"
 SKILL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TIERS_FILE="${SKILL_ROOT}/tiers.json"
 TPL_FILE="${SKILL_ROOT}/templates/controller-prompt.tpl.md"
@@ -170,11 +168,8 @@ CTRL_CMD="${CTRL_CMD_OVERRIDE:-$CTRL_DEFAULT}"
 WORKER_AGENT="${WORKER_OVERRIDE:-$WORKER_DEFAULT}"
 
 REPO_SEL="path:$(pwd)"
-FORK_REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]([^/]+)/([^/]+)#\1/\2#' | sed 's#\.git$##')" \
-  || emit_failure 3 "worktree_invalid" "Unable to read the origin remote" false
-if [[ ! "$FORK_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
-  emit_failure 3 "worktree_invalid" "Unable to resolve the fork repository from origin" false
-fi
+FORK_REPO="$(resolve_fork_repo)" \
+  || emit_failure 3 "worktree_invalid" "Unable to resolve the fork repository from origin" false
 BASE_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null)" \
   || emit_failure 3 "worktree_invalid" "Unable to determine the current branch" false
 [ -n "$BASE_BRANCH" ] || emit_failure 3 "worktree_invalid" "Unable to determine the current branch" false

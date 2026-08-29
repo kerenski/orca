@@ -25,6 +25,9 @@
 
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/_lib.sh"
+
 BRANCH=$(git branch --show-current 2>/dev/null || echo "")
 SHA=""
 PR_NUM=""
@@ -41,12 +44,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-OWNER_REPO=$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]([^/]+)/([^/]+)#\1/\2#' | sed 's#\.git$##')
-if [ -z "$OWNER_REPO" ] || [[ "$OWNER_REPO" != *"/"* ]]; then
-  # 不硬编码兑底仓库：错仓库查 CI 比直接报错更危险（多 remote 下 gh 偏好 upstream，必须显式指向 origin fork）
-  echo "ERROR: 无法从 origin remote 解析目标仓库（git remote get-url origin）" >&2
+OWNER_REPO=$(resolve_fork_repo) || {
+  echo "ERROR: 无法从 origin remote 解析目标仓库" >&2
   exit 3
-fi
+}
 
 # 若未显式给 PR 号也未给 SHA，则按当前分支反查 open PR
 if [ -z "$PR_NUM" ] && [ -z "$SHA" ]; then

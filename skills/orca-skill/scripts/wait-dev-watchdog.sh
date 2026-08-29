@@ -16,6 +16,9 @@
 
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/_lib.sh"
+
 CARD=""
 ISSUE=""
 ROUND=0
@@ -42,7 +45,7 @@ done
 [[ "$CARD" =~ ^[a-z0-9-]+$ ]] && [[ "$ISSUE" =~ ^[0-9]+$ ]] && [ -n "$WORKER" ] || {
   echo "ERROR: --card/--issue/--worker 必填" >&2; exit 1; }
 
-CHECK_INTERVAL=180    # 每 3 分钟检查
+CHECK_INTERVAL=120    # 每 2 分钟检查（纯靠看门狗检测，无 worker 主动通知）
 NUDGE_MAX=2           # 窗口期最多催 2 次
 NUDGE_GAP=900         # 催提交间隔 ≥15 分钟
 AWAKE_CHECK_DELAY=300 # 代发 5 分钟后校验 controller 是否真醒
@@ -59,7 +62,7 @@ fi
 
 # baseline 未传则启动时实测（send 脚本同源实测并打印，正常路径下二者相等）
 if [ -z "$BASELINE" ]; then
-  BASELINE=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+  BASELINE=$(ahead_count)
 fi
 
 mkdir -p "$STATE_DIR"
@@ -68,29 +71,7 @@ trap 'echo "watchdog: 收到终止信号，退出"; exit 0' TERM INT
 echo "watchdog: card=${CARD} round=${ROUND} worker=${WORKER} baseline=${BASELINE} max_wait=${MAX_WAIT}s ctrl=${CTRL_HANDLE} pid=$$"
 
 # ---- 判定原语与 poll-dev-local.sh 同源（锚点整行匹配、日志路径跨午夜重算） ----
-if [ "$ROUND" -eq 0 ]; then
-  ANCHOR="## 开发任务（首轮）"
-else
-  ANCHOR="## Code Review #${ROUND}"
-fi
-
-log_exists() {
-  local lf="开发日志/$(date +%Y-%m-%d)/${ISSUE}-${CARD}.md"
-  [ -f "$lf" ] && grep -Fxq -- "$ANCHOR" "$lf" 2>/dev/null
-}
-
-worker_alive() {
-  orca terminal list --json 2>/dev/null | jq -e --arg h "$WORKER" \
-    '.result.terminals[]? | select(.handle == $h)' >/dev/null 2>&1
-}
-
-real_changes() {
-  git -c core.quotepath=false diff --name-only "origin/main...HEAD" 2>/dev/null \
-    | grep -vE '^开发日志/' \
-    | grep -vE '^docs/' \
-    | grep -vE '\.(md|txt|rst|markdown)$' \
-    | grep -cE '.' || true
-}
+ANCHOR=$(compute_anchor "$ROUND")
 
 notify_ctrl() {
   orca terminal send --terminal "$CTRL_HANDLE" --text "$1" --enter --json >/dev/null 2>&1
@@ -100,13 +81,6 @@ notify_ctrl() {
 ctrl_awake() {
   orca terminal read --terminal "$CTRL_HANDLE" --screen 2>/dev/null \
     | grep -qE 'DEV_DONE|DEV_FAKE|POLLING:|poll-dev-local'
-}
-
-nudge_commit() {
-  orca terminal send --terminal "$WORKER" --text \
-    "开发日志已写好但代码尚未提交。请立即执行：git add -A && git commit -m \"${ISSUE} ${CARD}: 开发/修复完成（含开发日志）\" && git push origin HEAD。完成后回复：已提交。" \
-    --enter --json >/dev/null 2>&1 || true
-  echo "watchdog: [nudge] 已催 worker(${WORKER}) 提交并推送"
 }
 
 still_mine() { # pid 文件被换轮的新看门狗覆盖 → 旧的自查退出
@@ -124,7 +98,7 @@ dev_signal() {
     notify_ctrl "DEV_SIGNAL ${CARD} round=${ROUND} head=${head}（重发）"
     sleep "$AWAKE_CHECK_DELAY"
     if still_mine && ! ctrl_awake; then
-      echo "watchdog: controller 仍未醒，放弃重发（防注入风暴；等待 worker 自发通知或超时兜底）"
+      echo "watchdog: controller 仍未醒，放弃重发（防注入风暴；等待超时兜底）"
     fi
   fi
   exit 0
@@ -139,21 +113,21 @@ while true; do
   elapsed=$((elapsed + CHECK_INTERVAL))
   still_mine || { echo "watchdog: 已被新看门狗替换（换轮），退出"; exit 0; }
 
-  ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+  ahead=$(ahead_count)
   if [ "$ahead" -gt "$BASELINE" ]; then
     dev_signal
   fi
 
-  if ! worker_alive; then
+  if ! worker_alive "$WORKER"; then
     notify_ctrl "WORKER_DEAD ${CARD} round=${ROUND} worker=${WORKER}"
     echo "watchdog: worker 已消失，已通知 controller"
     exit 0
   fi
 
-  if log_exists \
+  if log_exists "$ISSUE" "$CARD" "$ANCHOR" \
      && [ "$nudged" -lt "$NUDGE_MAX" ] \
      && [ $((elapsed - last_nudge)) -ge "$NUDGE_GAP" ]; then
-    nudge_commit
+    nudge_commit "$WORKER" "$ISSUE" "$CARD"
     nudged=$((nudged + 1))
     last_nudge=$elapsed
   fi
