@@ -85,11 +85,8 @@ async function runSopPrelude(
   if (issue.isPullRequest) {
     return failure('card_start_issue_mismatch', '开卡仅支持 GitHub issue，不支持 pull request')
   }
-  if (!issue.title || !issue.title.toLowerCase().includes(request.card.toLowerCase())) {
-    return failure(
-      'card_start_issue_mismatch',
-      `issue #${request.issue} 标题与 card ${request.card} 不匹配，已停止开卡`
-    )
+  if (!issue.title) {
+    return failure('card_start_issue_mismatch', `issue #${request.issue} 没有标题，已停止开卡`)
   }
   let tierConfig: TierConfig
   try {

@@ -110,18 +110,14 @@ export default function CardStartDialog(): React.JSX.Element | null {
   }
 
   const start = async (): Promise<void> => {
-    if (!assessment || detailsLoading || detailsError) {
+    if (!item || detailsLoading || detailsError) {
       return
     }
     setPending(true)
     try {
-      if (!assessment.cardId) {
-        toast.error('标题开头未识别到合法 card id，无法开卡')
-        return
-      }
       const result = await startCardForRuntimeTarget(getActiveRuntimeTarget(settings), {
         issue: item.number,
-        card: assessment.cardId,
+        card: `issue-${item.number}`,
         tier: CardTierSchema.parse(tier),
         repoId: data.repoId
       })
@@ -153,7 +149,7 @@ export default function CardStartDialog(): React.JSX.Element | null {
           ) : null}
           {detailsError ? <div className="text-sm text-destructive">{detailsError}</div> : null}
           <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-sm">
-            <div className="font-medium">Card：{displayAssessment.cardId ?? '未识别'}</div>
+            <div className="font-medium">Card：issue-{item.number}</div>
             <div className="mt-1 text-muted-foreground">{displayAssessment.reasons.join(' ')}</div>
             <div className="mt-1 text-xs text-muted-foreground">
               规则建议：{displayAssessment.tier} · confidence：

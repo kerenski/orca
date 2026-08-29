@@ -10,13 +10,11 @@ export type CardTierAssessmentInput = {
 }
 
 export type CardTierAssessment = {
-  cardId: string | null
   tier: CardTier
   reasons: string[]
   confidence: number
 }
 
-const CARD_ID_PREFIX = /^\s*([A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)+)\b/
 const COMPLEX_SIGNALS =
   /\b(rbac|permission|security|migration|state machine|distributed|architecture|multi[- ]module|跨模块|权限|状态机|迁移)\b/i
 const MEDIUM_SIGNALS =
@@ -24,18 +22,8 @@ const MEDIUM_SIGNALS =
 const SIMPLE_SIGNALS =
   /\b(css|style|styling|copy|typo|single[- ]file|single[- ]page|纯样式|单文件|单页面)\b/i
 
-export function normalizeCardId(value: string | null | undefined): string | null {
-  if (!value) {
-    return null
-  }
-  const normalized = value.trim().toLowerCase()
-  return /^[a-z0-9]+(?:-[a-z0-9]+){1,63}$/.test(normalized) ? normalized : null
-}
-
 export function assessCardTier(input: CardTierAssessmentInput): CardTierAssessment {
   const text = `${input.title}\n${input.body ?? ''}\n${(input.labels ?? []).join(' ')}`
-  const match = input.title.match(CARD_ID_PREFIX)
-  const cardId = normalizeCardId(match?.[1])
   const reasons: string[] = []
   let tier: CardTier = 'simple'
   let confidence = 0.35
@@ -55,9 +43,5 @@ export function assessCardTier(input: CardTierAssessmentInput): CardTierAssessme
     reasons.push('可用信息不足，按规则保守选择 simple。')
   }
 
-  if (!cardId) {
-    confidence = Math.min(confidence, 0.45)
-    reasons.push('标题开头未解析出合法 card id。')
-  }
-  return { cardId, tier, reasons, confidence }
+  return { tier, reasons, confidence }
 }

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { assessCardTier, normalizeCardId } from './card-tier-assessment'
+import { assessCardTier } from './card-tier-assessment'
 
 describe('card tier assessment', () => {
-  it('normalizes card ids and parses title prefixes', () => {
-    expect(normalizeCardId('M1-04')).toBe('m1-04')
-    expect(assessCardTier({ title: 'M1-04 Fix button style' }).cardId).toBe('m1-04')
-  })
-
   it('classifies explicit complexity signals deterministically', () => {
     expect(assessCardTier({ title: 'M1-01 Add RBAC permission state machine' }).tier).toBe(
       'complex'
