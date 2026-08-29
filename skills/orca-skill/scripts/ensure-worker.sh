@@ -70,10 +70,16 @@ if [ "$FORCE" -eq 1 ] && [ -f "$HANDLE_FILE" ]; then
   sleep 2
 fi
 
-# ---- kimi 预信任（kimi 首启新 worktree 弹 Trust 确认，无人值守会退出） ----
+# ---- agent 预信任（防止无人值守时弹确认退出） ----
+# kimi: 写入 workspace-trust 文件
 if [[ "$WORKER_AGENT" == kimi* ]]; then
   echo "  [kimi] 预信任当前 worktree：$(pwd)"
   bash "${SCRIPT_DIR}/kimi-trust.sh" "$(pwd)"
+fi
+# mimo: 注入 --trust 参数（若未自带）
+if [[ "$WORKER_AGENT" == mimo* ]] && [[ "$WORKER_AGENT" != *"--trust"* ]]; then
+  WORKER_AGENT="$WORKER_AGENT --trust"
+  echo "  [mimo] 已自动注入 --trust 参数"
 fi
 
 # ---- 生成带序号的 worker 标题（仅真正新建时递增；复用分支已提前 exit 0，不会执行到这里） ----

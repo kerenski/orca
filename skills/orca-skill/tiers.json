@@ -26,7 +26,7 @@
   ],
   "tiers": {
     "simple": {
-      "controller": "mimo --yolo -m xiaomi/mimo-v2.5",
+      "controller": "mimo --yolo --trust -m xiaomi/mimo-v2.5",
       "worker": "kimi"
     },
     "medium": {
