@@ -10313,7 +10313,7 @@ export default function CardPage(): React.JSX.Element {
                 {githubDependencyTree.diagnostics.length > 0 ? (
                   <div
                     role="alert"
-                    className="flex items-start gap-2 border-b border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-200"
+                    className="mb-2.5 flex items-start gap-2 border-b border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-200"
                   >
                     <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
                     <span>
