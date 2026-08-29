@@ -136,14 +136,11 @@ import PRFilterDropdowns, { type PRFilterChange } from '@/components/github/PRFi
 import { GitHubMarkdownComposer } from '@/components/github/GitHubMarkdownComposer'
 import { GitHubUserAvatar } from '@/components/github/github-user-avatar'
 import { buildGitHubRepoUrl, parseGitHubIssueOrPRLink } from '@/lib/github-links'
-import {
-  findGithubWorkItemWorkspaceAttachment,
-  getGithubWorkItemWorkspaceAttachmentLabel
-} from '@/lib/github-work-item-workspace-attachment'
+import { findGithubWorkItemWorkspaceAttachment } from '@/lib/github-work-item-workspace-attachment'
+import { getWorktreeAttachmentLabel } from '@/lib/worktree-attachment-label'
 import {
   buildLinearIssueWorkspaceAttachmentIndex,
-  findLinearIssueWorkspaceAttachmentInIndex,
-  getLinearIssueWorkspaceAttachmentLabel
+  findLinearIssueWorkspaceAttachmentInIndex
 } from '@/lib/linear-issue-workspace-attachment'
 import { openLinearIssueWorkspaceOrStart } from '@/lib/linear-issue-workspace-open'
 import { folderWorkspaceToWorktree } from '../../../shared/folder-workspace-worktree'
@@ -403,13 +400,15 @@ import {
   useTeamLabels
 } from '@/hooks/useIssueMetadata'
 import {
-  linearCreateProject,
   linearCreateIssue,
   linearGetIssue,
-  linearTeamStates,
-  linearUpdateIssue,
-  linearListProjects
-} from '@/runtime/runtime-linear-client'
+  linearUpdateIssue
+} from '@/runtime/runtime-linear-issue-mutations'
+import {
+  linearCreateProject,
+  linearListProjects,
+  linearTeamStates
+} from '@/runtime/runtime-linear-project-client'
 import {
   jiraCreateIssue,
   jiraGetIssue,
@@ -10353,7 +10352,7 @@ export default function CardPage(): React.JSX.Element {
                           item.number
                         )
                         const attachedWorkspaceLabel = attachedWorkspace
-                          ? getGithubWorkItemWorkspaceAttachmentLabel(attachedWorkspace)
+                          ? getWorktreeAttachmentLabel(attachedWorkspace)
                           : null
                         const prDelta = item.type === 'pr' ? formatPRDelta(item) : null
                         const githubTaskIdPill = (
@@ -11771,7 +11770,7 @@ export default function CardPage(): React.JSX.Element {
                               issue
                             )
                             const attachedWorkspaceLabel = attachedWorkspace
-                              ? getLinearIssueWorkspaceAttachmentLabel(attachedWorkspace)
+                              ? getWorktreeAttachmentLabel(attachedWorkspace)
                               : null
                             return (
                               <div
@@ -11970,7 +11969,7 @@ export default function CardPage(): React.JSX.Element {
                         issue
                       )
                       const attachedWorkspaceLabel = attachedWorkspace
-                        ? getLinearIssueWorkspaceAttachmentLabel(attachedWorkspace)
+                        ? getWorktreeAttachmentLabel(attachedWorkspace)
                         : null
                       return (
                         <div

@@ -204,7 +204,7 @@ export type GitHubSlice = {
     displayLimit: number,
     query: string,
     page: number,
-    options?: Pick<FetchOptions, 'noCache' | 'requireComplete'>
+    options?: Pick<FetchOptions, 'noCache' | 'requireComplete' | 'includeDependencies'>
   ) => Promise<{
     items: GitHubWorkItem[]
     failedCount: number

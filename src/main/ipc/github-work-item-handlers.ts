@@ -89,6 +89,7 @@ export function registerGitHubWorkItemHandlers(store: Store): void {
         query?: string
         page?: number
         noCache?: boolean
+        includeDependencies?: boolean
       }
     ) => {
       const repo = assertRegisteredGitHubRepo(args, store)
@@ -100,7 +101,8 @@ export function registerGitHubWorkItemHandlers(store: Store): void {
         repo.issueSourcePreference,
         getGitHubRepoConnectionId(repo),
         args.noCache,
-        ...getGitHubLocalGitOptionArgs(store, repo)
+        ...getGitHubLocalGitOptionArgs(store, repo),
+        args.includeDependencies
       )
     }
   )

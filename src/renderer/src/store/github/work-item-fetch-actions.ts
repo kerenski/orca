@@ -129,7 +129,10 @@ export const createWorkItemFetchActions = (
         const envelope = await listGitHubWorkItemsForRepo(requestContext, {
           limit,
           query: query || undefined,
-          ...(options?.noCache ? { noCache: true } : {})
+          ...(options?.noCache ? { noCache: true } : {}),
+          ...(options?.includeDependencies !== undefined
+            ? { includeDependencies: options.includeDependencies }
+            : {})
         })
         // Why: stamp repoId at the fetch boundary so downstream consumers can rely on it — main doesn't know Orca's Repo.id.
         const items: GitHubWorkItem[] = envelope.items.map((item) => ({ ...item, repoId }))

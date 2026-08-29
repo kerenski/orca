@@ -132,7 +132,10 @@ export const createWorkItemAggregateActions = (
             limit: perRepoLimit,
             query: query || undefined,
             page,
-            ...(options?.noCache ? { noCache: true } : {})
+            ...(options?.noCache ? { noCache: true } : {}),
+            ...(options?.includeDependencies !== undefined
+              ? { includeDependencies: options.includeDependencies }
+              : {})
           })
           // Why: page-N failures aren't in the per-repo banner (keyed on the initial fetch); log them so pagination failures are observable instead of silently truncating (richer surface deferred, design doc §6).
           if (envelope.errors?.issues) {

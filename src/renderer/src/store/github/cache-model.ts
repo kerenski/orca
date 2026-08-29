@@ -29,6 +29,7 @@ export type FetchOptions = {
   noCache?: boolean
   requireComplete?: boolean
   allowStaleFallback?: boolean
+  includeDependencies?: boolean
   sourceContext?: TaskSourceContext | null
 }
 

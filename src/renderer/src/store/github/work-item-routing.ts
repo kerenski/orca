@@ -36,6 +36,7 @@ export type GitHubWorkItemsListArgs = {
   query?: string
   page?: number
   noCache?: true
+  includeDependencies?: boolean
 }
 
 export function settingsForGitHubRepoOwner(
